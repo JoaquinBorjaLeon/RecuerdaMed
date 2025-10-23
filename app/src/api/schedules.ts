@@ -21,6 +21,7 @@ export async function listSchedulesByMed(medId: string) {
 }
 
 // listener en tiempo real (útil en el detalle)
+// listenSchedulesByMed
 export function listenSchedulesByMed(medId: string, cb: (items: Schedule[]) => void) {
   const q = query(
     collection(db, "schedules"),
@@ -31,3 +32,4 @@ export function listenSchedulesByMed(medId: string, cb: (items: Schedule[]) => v
     cb(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as Schedule[]);
   });
 }
+
