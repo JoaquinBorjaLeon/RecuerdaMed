@@ -31,3 +31,27 @@ export type Schedule = {
   toleranceMinutes: number;      // p.ej. 30
   createdAt: any;
 };
+
+export type TomaStatus = "PLANNED" | "DUE" | "CONFIRMED" | "SKIPPED" | "EXPIRED";
+
+export type Toma = {
+  id: string;
+  patientId: string;
+  medId: string;
+  scheduleId: string;
+
+  plannedAt: string;      // ISO
+  windowStart: string;    // ISO
+  windowEnd: string;      // ISO
+
+  status: TomaStatus;
+
+  notificationId?: string | null;
+
+  // ✅ clave anti-duplicados (muy importante)
+  dedupeKey: string;
+
+  createdAt?: any;
+  confirmedAt?: string;
+};
+

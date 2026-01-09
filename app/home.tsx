@@ -16,19 +16,22 @@ import {
 } from "firebase/firestore";
 
 import type { Medication } from "./src/types";
+import { registerForPushNotifications } from "./src/api/notifications";
+import { savePushToken } from "./src/api/pushTokens";
+
 
 export default function Home() {
   const router = useRouter();
   const [meds, setMeds] = useState<Medication[]>([]);
+  const [notificationsReady, setNotificationsReady] = useState(false);
 
-  // refs para almacenar los unsubscribe y poder cortarlos donde queramos
+  // refs para unsubscribe
   const unsubMedsRef = useRef<null | (() => void)>(null);
   const unsubAuthRef = useRef<null | (() => void)>(null);
 
-  // ✅ Suscripción en tiempo real a las medicaciones del usuario
   useEffect(() => {
-    unsubAuthRef.current = onAuthStateChanged(auth, (u) => {
-      // Si cambia el user, corta el listener anterior de meds
+    unsubAuthRef.current = onAuthStateChanged(auth, async (u) => {
+      // 🔥 cortar listener anterior
       if (unsubMedsRef.current) {
         unsubMedsRef.current();
         unsubMedsRef.current = null;
@@ -36,10 +39,24 @@ export default function Home() {
 
       if (!u) {
         setMeds([]);
+        setNotificationsReady(false);
         router.replace("/");
         return;
       }
 
+      // 🔔 REGISTRO DE NOTIFICACIONES (H4.1)
+      if (!notificationsReady) {
+        try {
+          const token = await registerForPushNotifications();
+          await savePushToken(u.uid, token);
+          console.log("Push token guardado");
+          setNotificationsReady(true);
+        } catch (e) {
+          console.warn("Notificaciones no habilitadas:", e);
+        }
+      }
+
+      // 📦 Listener de medicaciones
       const q = query(
         collection(db, "medications"),
         where("patientId", "==", u.uid),
@@ -49,10 +66,12 @@ export default function Home() {
       unsubMedsRef.current = onSnapshot(
         q,
         (snap) => {
-          const items = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Medication[];
+          const items = snap.docs.map((d) => ({
+            id: d.id,
+            ...(d.data() as any),
+          })) as Medication[];
           setMeds(items);
         },
-        // Evita que el app crashee cuando Auth pasa a null durante logout
         (err) => {
           if (err?.code !== "permission-denied") {
             console.warn("onSnapshot(medications) error:", err);
@@ -61,32 +80,15 @@ export default function Home() {
       );
     });
 
-    // Limpieza al desmontar la pantalla
     return () => {
       if (unsubMedsRef.current) unsubMedsRef.current();
       if (unsubAuthRef.current) unsubAuthRef.current();
     };
-  }, [router]);
+  }, [router, notificationsReady]);
 
-  // (opcional) botón de prueba para crear un paciente demo
-  async function crearPacienteDemo() {
-    try {
-      await addDoc(collection(db, "patients"), {
-        fullName: "Juan Pérez",
-        timezone: "Europe/Madrid",
-        locale: "es-ES",
-        createdAt: serverTimestamp(),
-      });
-      Alert.alert("OK", "Paciente demo creado en Firestore");
-    } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "No se pudo crear el paciente");
-    }
-  }
-
-  // 🔒 Cerrar sesión sin errores de permisos
+  // 🔒 Logout limpio
   async function handleLogout() {
     try {
-      // Corta el snapshot antes de cerrar sesión
       if (unsubMedsRef.current) {
         unsubMedsRef.current();
         unsubMedsRef.current = null;
@@ -125,8 +127,13 @@ export default function Home() {
         <Text style={{ color: "#fff", fontWeight: "700" }}>Añadir medicación</Text>
       </TouchableOpacity>
 
-      {/* Botón de prueba opcional */}
-      {/* <Button title="Crear paciente demo" onPress={crearPacienteDemo} /> */}
+      <TouchableOpacity
+        onPress={() => router.push("/tomas")}
+        style={{ backgroundColor: "#111827", padding: 14, borderRadius: 10, alignItems: "center" }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "700" }}>Ver tomas</Text>
+      </TouchableOpacity>
+
 
       <Button title="Cerrar sesión" onPress={handleLogout} />
     </View>

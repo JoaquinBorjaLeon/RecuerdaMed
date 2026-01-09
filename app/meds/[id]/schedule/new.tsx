@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, Button, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  useColorScheme,
+} from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../../src/lib/firebase";
@@ -9,16 +16,33 @@ import type { SchedulePattern } from "../../../src/types";
 export default function NewSchedule() {
   const { id } = useLocalSearchParams<{ id: string }>(); // medId
   const router = useRouter();
+
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
+
   const [uid, setUid] = useState<string | null>(null);
 
   // form state
   const [pattern, setPattern] = useState<SchedulePattern>("DAILY");
   const [times, setTimes] = useState<string>("08:00,20:00");
-  const [dow, setDow] = useState<string>("1,2,3,4,5"); // L..V
-  const [every, setEvery] = useState<string>("8"); // horas
+  const [dow, setDow] = useState<string>("1,2,3,4,5");
+  const [every, setEvery] = useState<string>("8");
   const [startDate, setStartDate] = useState<string>("2025-10-22");
   const [endDate, setEndDate] = useState<string>("");
   const [tol, setTol] = useState<string>("30");
+
+  const inputStyle = {
+    borderWidth: 1,
+    borderColor: isDark ? "#E5E7EB" : "#111827",
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: isDark ? "#111827" : "#FFFFFF",
+    color: isDark ? "#F9FAFB" : "#111827",
+  } as const;
+
+  const placeholderColor = isDark ? "#9CA3AF" : "#6B7280";
+  const textColor = isDark ? "#F9FAFB" : "#111827";
+  const bgColor = isDark ? "#0B1220" : "#FFFFFF";
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
@@ -30,8 +54,8 @@ export default function NewSchedule() {
 
   function parseDate(input: string): string | null {
     const s = input.trim();
-    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s; // YYYY-MM-DD
-    const m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/); // DD/MM/YYYY
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+    const m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
     if (m) return `${m[3]}-${m[2]}-${m[1]}`;
     return null;
   }
@@ -97,77 +121,91 @@ export default function NewSchedule() {
       Alert.alert("Listo", "Planificación guardada");
       router.back();
     } catch (e: any) {
-      console.error("createSchedule error:", e);
       Alert.alert("Error", e?.message ?? "No se pudo guardar");
     }
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 10 }}>
-      <Text style={{ fontSize: 20, fontWeight: "700" }}>Nueva planificación</Text>
+    <View style={{ flex: 1, padding: 16, gap: 12, backgroundColor: bgColor }}>
+      <Text style={{ fontSize: 22, fontWeight: "700", color: textColor }}>
+        Nueva planificación
+      </Text>
 
-      <Text style={{ marginTop: 8 }}>Patrón (DAILY | DOW | EVERY_X_HOURS):</Text>
+      <Text style={{ color: textColor }}>Patrón</Text>
       <TextInput
         value={pattern}
         onChangeText={(v) => setPattern(v as SchedulePattern)}
         placeholder="DAILY | DOW | EVERY_X_HOURS"
-        style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
+        placeholderTextColor={placeholderColor}
+        style={inputStyle}
       />
 
       {(pattern === "DAILY" || pattern === "DOW") && (
         <>
-          <Text>Horas (coma): ej. 08:00,20:00</Text>
+          <Text style={{ color: textColor }}>Horas (ej. 08:00,20:00)</Text>
           <TextInput
             value={times}
             onChangeText={setTimes}
-            style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
+            placeholder="08:00,20:00"
+            placeholderTextColor={placeholderColor}
+            style={inputStyle}
           />
         </>
       )}
 
       {pattern === "DOW" && (
         <>
-          <Text>Días (1-7, coma) — 1=L, 7=D</Text>
+          <Text style={{ color: textColor }}>Días (1=L … 7=D)</Text>
           <TextInput
             value={dow}
             onChangeText={setDow}
-            style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
+            placeholder="1,2,3,4,5"
+            placeholderTextColor={placeholderColor}
+            style={inputStyle}
           />
         </>
       )}
 
       {pattern === "EVERY_X_HOURS" && (
         <>
-          <Text>Cada X horas (número)</Text>
+          <Text style={{ color: textColor }}>Cada X horas</Text>
           <TextInput
             value={every}
             onChangeText={setEvery}
             keyboardType="numeric"
-            style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
+            placeholder="8"
+            placeholderTextColor={placeholderColor}
+            style={inputStyle}
           />
         </>
       )}
 
-      <Text>Inicio (YYYY-MM-DD o DD/MM/YYYY)</Text>
+      <Text style={{ color: textColor }}>Inicio</Text>
       <TextInput
         value={startDate}
         onChangeText={setStartDate}
-        style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
+        placeholder="YYYY-MM-DD o DD/MM/YYYY"
+        placeholderTextColor={placeholderColor}
+        style={inputStyle}
       />
 
-      <Text>Fin (opcional, YYYY-MM-DD o DD/MM/YYYY)</Text>
+      <Text style={{ color: textColor }}>Fin (opcional)</Text>
       <TextInput
         value={endDate}
         onChangeText={setEndDate}
-        style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
+        placeholder="YYYY-MM-DD o DD/MM/YYYY"
+        placeholderTextColor={placeholderColor}
+        style={inputStyle}
       />
 
-      <Text>Tolerancia ± minutos</Text>
+      <Text style={{ color: textColor }}>Tolerancia (min)</Text>
       <TextInput
         value={tol}
         onChangeText={setTol}
         keyboardType="numeric"
-        style={{ borderWidth: 1, borderRadius: 8, padding: 12 }}
+        placeholder="30"
+        placeholderTextColor={placeholderColor}
+        style={inputStyle}
       />
 
       <Button title="Guardar" onPress={save} />
