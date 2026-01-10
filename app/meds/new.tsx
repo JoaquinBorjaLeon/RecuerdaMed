@@ -3,10 +3,10 @@ import { View, Text, TextInput, Alert, StyleSheet } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
-import { auth } from "../src/lib/firebase";
-import { createMedication } from "../src/api/meds";
-import { Colors } from "../src/theme/colors";
-import { PrimaryButton } from "../src/components/primaryButton";
+import { auth } from "../../src/lib/firebase";
+import { createMedication } from "../../src/api/meds";
+import { Colors } from "../../src/theme/colors";
+import { PrimaryButton } from "../../src/components/primaryButton";
 
 export default function NewMedication() {
   const router = useRouter();

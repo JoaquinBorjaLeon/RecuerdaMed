@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../src/lib/firebase";
-import type { Medication, Schedule } from "../src/types";
-import { listenSchedulesByMed } from "../src/api/schedules";
+import { db } from "../../src/lib/firebase";
+import type { Medication, Schedule } from "../../src/types";
+import { listenSchedulesByMed } from "../../src/api/schedules";
 
 export default function MedDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();

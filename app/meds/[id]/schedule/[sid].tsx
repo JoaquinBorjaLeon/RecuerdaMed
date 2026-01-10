@@ -9,8 +9,8 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "../../../src/lib/firebase";
-import type { Schedule, SchedulePattern } from "../../../src/types";
+import { db } from "../../../../src/lib/firebase";
+import type { Schedule, SchedulePattern } from "../../../../src/types";
 
 function parseDate(input: string): string | null {
   const s = input.trim();

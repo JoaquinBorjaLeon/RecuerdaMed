@@ -4,12 +4,12 @@ import { View, Text, FlatList, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
-import { auth } from "../src/lib/firebase";
-import { getPatientsForCaregiver } from "../src/api/careLinks";
-import type { UserProfile } from "../src/api/users";
+import { auth } from "../../src/lib/firebase";
+import { getPatientsForCaregiver } from "../../src/api/careLinks";
+import type { UserProfile } from "../../src/api/users";
 
-import { Card } from "../src/components/card";
-import { Colors } from "../src/theme/colors";
+import { Card } from "../../src/components/card";
+import { Colors } from "../../src/theme/colors";
 
 export default function CaregiverPatientsScreen() {
   const router = useRouter();

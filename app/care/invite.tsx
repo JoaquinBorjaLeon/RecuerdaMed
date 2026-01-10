@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { View, Text, TextInput, Alert, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { auth } from "../src/lib/firebase";
-import { inviteCaregiver } from "../src/api/careLinks";
+import { auth } from "../../src/lib/firebase";
+import { inviteCaregiver } from "../../src/api/careLinks";
 
-import { PrimaryButton } from "../src/components/primaryButton";
-import { Colors } from "../src/theme/colors";
+import { PrimaryButton } from "../../src/components/primaryButton";
+import { Colors } from "../../src/theme/colors";
 
 export default function InviteCaregiverScreen() {
   const router = useRouter();

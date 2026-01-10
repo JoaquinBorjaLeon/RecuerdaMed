@@ -14,8 +14,8 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 
-import { auth } from "./src/lib/firebase";
-import { getUserById } from "./src/api/users";
+import { auth } from "../src/lib/firebase";
+import { getUserById } from "../src/api/users";
 
 export default function Login() {
   const [email, setEmail] = useState("");

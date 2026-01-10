@@ -9,9 +9,9 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../../src/lib/firebase";
-import { createSchedule } from "../../../src/api/schedules";
-import type { SchedulePattern } from "../../../src/types";
+import { auth } from "../../../../src/lib/firebase";
+import { createSchedule } from "../../../../src/api/schedules";
+import type { SchedulePattern } from "../../../../src/types";
 
 export default function NewSchedule() {
   const { id, patientId } = useLocalSearchParams<{

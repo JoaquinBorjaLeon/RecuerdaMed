@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 import { View, Text, FlatList, Alert, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./src/lib/firebase";
+import { auth } from "../src/lib/firebase";
 
-import type { Toma } from "./src/types";
-import { listenUpcomingTomas, confirmToma } from "./src/api/tomas";
+import type { Toma } from "../src/types";
+import { listenUpcomingTomas, confirmToma } from "../src/api/tomas";
 
-import { Card } from "./src/components/card";
-import { PrimaryButton } from "./src/components/primaryButton";
-import { Colors } from "./src/theme/colors";
+import { Card } from "../src/components/card";
+import { PrimaryButton } from "../src/components/primaryButton";
+import { Colors } from "../src/theme/colors";
 
 function fmt(iso: string) {
   const d = new Date(iso);

@@ -11,12 +11,12 @@ import {
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
-import { auth } from "./src/lib/firebase";
-import { upsertUserProfile } from "./src/api/users";
+import { auth } from "../src/lib/firebase";
+import { upsertUserProfile } from "../src/api/users";
 
-import { PrimaryButton } from "./src/components/primaryButton";
-import { Card } from "./src/components/card";
-import { Colors } from "./src/theme/colors";
+import { PrimaryButton } from "../src/components/primaryButton";
+import { Card } from "../src/components/card";
+import { Colors } from "../src/theme/colors";
 
 type Role = "PATIENT" | "CAREGIVER";
 

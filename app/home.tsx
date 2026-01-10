@@ -4,7 +4,7 @@ import { View, Text, FlatList, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth, db } from "./src/lib/firebase";
+import { auth, db } from "../src/lib/firebase";
 import {
   collection,
   onSnapshot,
@@ -13,16 +13,16 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-import type { Medication } from "./src/types";
-import type { UserProfile } from "./src/api/users";
-import { getUserById } from "./src/api/users";
+import type { Medication } from "../src/types";
+import type { UserProfile } from "../src/api/users";
+import { getUserById } from "../src/api/users";
 
-import { registerForPushNotifications } from "./src/api/notifications";
-import { savePushToken } from "./src/api/pushTokens";
+import { registerForPushNotifications } from "../src/api/notifications";
+import { savePushToken } from "../src/api/pushTokens";
 
-import { Card } from "./src/components/card";
-import { PrimaryButton } from "./src/components/primaryButton";
-import { Colors } from "./src/theme/colors";
+import { Card } from "../src/components/card";
+import { PrimaryButton } from "../src/components/primaryButton";
+import { Colors } from "../src/theme/colors";
 
 export default function Home() {
   const router = useRouter();

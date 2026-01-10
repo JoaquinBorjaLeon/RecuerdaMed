@@ -11,13 +11,13 @@ import {
   orderBy,
 } from "firebase/firestore";
 
-import { auth, db } from "../../src/lib/firebase";
-import type { Medication } from "../../src/types";
-import { getUserById, UserProfile } from "../../src/api/users";
+import { auth, db } from "../../../src/lib/firebase";
+import type { Medication } from "../../../src/types";
+import { getUserById, UserProfile } from "../../../src/api/users";
 
-import { Card } from "../../src/components/card";
-import { PrimaryButton } from "../../src/components/primaryButton";
-import { Colors } from "../../src/theme/colors";
+import { Card } from "../../../src/components/card";
+import { PrimaryButton } from "../../../src/components/primaryButton";
+import { Colors } from "../../../src/theme/colors";
 
 export default function PatientDetailScreen() {
   const router = useRouter();

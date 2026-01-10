@@ -3,15 +3,15 @@ import { View, Text, FlatList, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
-import { auth } from "../src/lib/firebase";
+import { auth } from "../../src/lib/firebase";
 import {
   getActiveCareLinksForPatient,
   removeCareLink,
-} from "../src/api/careLinks";
+} from "../../src/api/careLinks";
 
-import { Card } from "../src/components/card";
-import { PrimaryButton } from "../src/components/primaryButton";
-import { Colors } from "../src/theme/colors";
+import { Card } from "../../src/components/card";
+import { PrimaryButton } from "../../src/components/primaryButton";
+import { Colors } from "../../src/theme/colors";
 
 export default function MyCaregivers() {
   const router = useRouter();
