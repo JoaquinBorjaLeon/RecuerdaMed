@@ -15,6 +15,9 @@ import {
 import { db } from "../lib/firebase";
 import type { Toma, Schedule } from "../types";
 import * as Notifications from "expo-notifications";
+import { getActiveCaregivers } from "./careLinks";
+import { getPushTokensByUserIds } from "./pushTokens";
+import { sendPushToCaregivers } from "./notifications";
 
 // -------------------- helpers --------------------
 function startOfDay(d: Date) {
@@ -28,14 +31,12 @@ function endOfDay(d: Date) {
   return x;
 }
 function parseYMD(ymd: string): Date {
-  // ymd = "YYYY-MM-DD"
   const [y, m, d] = ymd.split("-").map(Number);
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
 function iso(d: Date) {
   return d.toISOString();
 }
-// JS: 0=Sun..6=Sat  -> ISO: 1=Mon..7=Sun
 function jsDayToISOdow(jsDay: number) {
   return ((jsDay + 6) % 7) + 1;
 }
@@ -74,70 +75,65 @@ export function listenUpcomingTomas(
       (d) => ({ id: d.id, ...(d.data() as any) }) as Toma
     );
 
-    // 1) Pintas la UI
     cb(items);
 
-    // 2) Y en paralelo actualizas estados si toca
-    // (solo cambia si procede, por eso no crea bucles infinitos)
     await Promise.all(
       items.map(async (t) => {
         try {
           await updateTomaStatusIfNeeded(t);
-        } catch (e) {
-          // Silencioso en prod; en dev puedes loguear
-          // console.warn("updateTomaStatusIfNeeded error:", e);
-        }
+        } catch {}
       })
     );
   });
 }
 
-
-export async function confirmToma(tomaId: string) {
+export async function confirmToma(tomaId: string, toma: Toma) {
   await updateDoc(doc(db, "tomas", tomaId), {
     status: "CONFIRMED",
     confirmedAt: new Date().toISOString(),
   });
+
+  const caregiverIds = await getActiveCaregivers(toma.patientId);
+  const tokens = await getPushTokensByUserIds(caregiverIds);
+
+  await sendPushToCaregivers(
+    tokens,
+    "RecuerdaMed",
+    "El paciente ha confirmado la toma de su medicación"
+  );
 }
 
-/**
- * Actualiza el estado de una toma según el momento actual
- * PLANNED -> DUE -> EXPIRED
- */
 export async function updateTomaStatusIfNeeded(toma: Toma) {
   const now = new Date().toISOString();
 
-  // Pasa a DUE cuando entra en ventana
-  if (toma.status === "PLANNED" && now >= toma.windowStart && now <= toma.windowEnd) {
+  if (
+    toma.status === "PLANNED" &&
+    now >= toma.windowStart &&
+    now <= toma.windowEnd
+  ) {
     await updateDoc(doc(db, "tomas", toma.id), { status: "DUE" });
     return;
   }
 
-  // Pasa a EXPIRED cuando se pasa la ventana
   if (toma.status === "DUE" && now > toma.windowEnd) {
     await updateDoc(doc(db, "tomas", toma.id), { status: "EXPIRED" });
   }
 }
 
-/**
- * Genera tomas dentro del rango:
- *   max(hoy, schedule.startDate)  ->  min(schedule.endDate, hoy + daysAhead)
- * y respeta DAILY / DOW / EVERY_X_HOURS.
- *
- * Evita duplicados usando dedupeKey.
- * Programa y persiste notificationId en cada toma.
- */
-export async function generateTomasFromSchedule(schedule: Schedule, daysAhead: number = 7) {
-  // Validaciones mínimas
+export async function generateTomasFromSchedule(
+  schedule: Schedule,
+  daysAhead: number = 7
+) {
   if (!schedule.patientId || !schedule.medId || !schedule.id) return;
   if (!schedule.startDate) return;
 
   const tolerance = schedule.toleranceMinutes ?? 30;
 
-  // Rango válido
   const today = startOfDay(new Date());
   const start = startOfDay(parseYMD(schedule.startDate));
-  const rangeStart = startOfDay(new Date(Math.max(today.getTime(), start.getTime())));
+  const rangeStart = startOfDay(
+    new Date(Math.max(today.getTime(), start.getTime()))
+  );
 
   const maxAhead = endOfDay(new Date());
   maxAhead.setDate(maxAhead.getDate() + daysAhead);
@@ -148,61 +144,57 @@ export async function generateTomasFromSchedule(schedule: Schedule, daysAhead: n
     rangeEnd = new Date(Math.min(maxAhead.getTime(), end.getTime()));
   }
 
-  // Si el rango no tiene sentido, no generamos nada
   if (rangeEnd.getTime() < rangeStart.getTime()) return;
 
-  // Crea una toma (si no existe) y programa notificación
   const createOneToma = async (plannedAt: Date) => {
-    if (plannedAt.getTime() < rangeStart.getTime()) return;
-    if (plannedAt.getTime() > rangeEnd.getTime()) return;
+    if (plannedAt < rangeStart || plannedAt > rangeEnd) return;
 
     const plannedISO = iso(plannedAt);
-
-    // Clave anti-duplicados (scheduleId + plannedAt)
     const dedupeKey = `${schedule.id}__${plannedISO}`;
 
-    const exists = await tomaExistsByDedupeKey(schedule.patientId, dedupeKey);
-    if (exists) return;
+    if (await tomaExistsByDedupeKey(schedule.patientId, dedupeKey)) return;
 
-    // Programar notificación (trigger por fecha absoluta)
-    const notificationId = await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "RecuerdaMed",
-      body: "Es hora de tomar tu medicación",
-      data: { tomaPlannedAt: plannedISO, scheduleId: schedule.id, medId: schedule.medId },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: plannedAt,
-      },
-    });
-
+    const notificationId =
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "RecuerdaMed",
+          body: "Es hora de tomar tu medicación",
+          data: {
+            tomaPlannedAt: plannedISO,
+            scheduleId: schedule.id,
+            medId: schedule.medId,
+          },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: plannedAt,
+        },
+      });
 
     await createToma({
       scheduleId: schedule.id,
       medId: schedule.medId,
       patientId: schedule.patientId,
-
       plannedAt: plannedISO,
-      windowStart: iso(new Date(plannedAt.getTime() - tolerance * 60_000)),
-      windowEnd: iso(new Date(plannedAt.getTime() + tolerance * 60_000)),
-
+      windowStart: iso(
+        new Date(plannedAt.getTime() - tolerance * 60000)
+      ),
+      windowEnd: iso(
+        new Date(plannedAt.getTime() + tolerance * 60000)
+      ),
       status: "PLANNED",
       notificationId,
       dedupeKey,
     });
   };
 
-  // DAILY / DOW
   if (schedule.pattern === "DAILY" || schedule.pattern === "DOW") {
-    const times = (schedule.times ?? []).map((t) => t.trim()).filter(Boolean);
-    if (!times.length) return;
-
+    const times = schedule.times ?? [];
     const allowedDow = schedule.pattern === "DOW" ? schedule.dow ?? [] : null;
 
     for (
       let d = new Date(rangeStart);
-      d.getTime() <= rangeEnd.getTime();
+      d <= rangeEnd;
       d.setDate(d.getDate() + 1)
     ) {
       if (allowedDow) {
@@ -217,21 +209,29 @@ export async function generateTomasFromSchedule(schedule: Schedule, daysAhead: n
         await createOneToma(plannedAt);
       }
     }
-    return;
   }
 
-  // EVERY_X_HOURS
   if (schedule.pattern === "EVERY_X_HOURS") {
-    const interval = schedule.everyXHours ?? 8;
-    if (!interval || interval < 1) return;
-
     let t = new Date(rangeStart);
-    t.setHours(0, 0, 0, 0);
-
-    while (t.getTime() <= rangeEnd.getTime()) {
+    while (t <= rangeEnd) {
       await createOneToma(new Date(t));
-      t = new Date(t.getTime() + interval * 3_600_000);
+      t = new Date(t.getTime() + schedule.everyXHours! * 3600000);
     }
-    return;
   }
+}
+
+export async function canDeleteMedication(
+  medicationId: string
+): Promise<boolean> {
+  const now = new Date().toISOString();
+
+  const q = query(
+    collection(db, "tomas"),
+    where("medId", "==", medicationId),
+    where("plannedAt", ">", now),
+    where("status", "==", "PLANNED")
+  );
+
+  const snap = await getDocs(q);
+  return snap.empty;
 }

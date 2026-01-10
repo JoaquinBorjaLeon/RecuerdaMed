@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, Alert, useColorScheme } from "react-native";
-import { useRouter } from "expo-router";
+import { View, Text, TextInput, Alert, StyleSheet } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
+
 import { auth } from "../src/lib/firebase";
 import { createMedication } from "../src/api/meds";
+import { Colors } from "../src/theme/colors";
+import { PrimaryButton } from "../src/components/primaryButton";
 
 export default function NewMedication() {
   const router = useRouter();
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
+  const { patientId } = useLocalSearchParams<{ patientId?: string }>();
 
   const [uid, setUid] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -16,37 +18,37 @@ export default function NewMedication() {
   const [strength, setStrength] = useState("");
   const [notes, setNotes] = useState("");
 
-  const inputStyle = {
-    borderWidth: 1,
-    borderColor: isDark ? "#E5E7EB" : "#111827",
-    borderRadius: 10,
-    padding: 12,
-    backgroundColor: isDark ? "#111827" : "#FFFFFF",
-    color: isDark ? "#F9FAFB" : "#111827",
-  } as const;
-
-  const placeholderColor = isDark ? "#9CA3AF" : "#6B7280";
-  const labelColor = isDark ? "#F9FAFB" : "#111827";
-  const bgColor = isDark ? "#0B1220" : "#FFFFFF";
-
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      if (!u) router.replace("/");
-      else setUid(u.uid);
+    return onAuthStateChanged(auth, (u) => {
+      if (!u) {
+        router.replace("/");
+        return;
+      }
+      setUid(u.uid);
     });
-    return unsub;
   }, [router]);
 
   async function save() {
+    // 🔴 validaciones importantes
     if (!uid) return;
-    if (!name.trim()) return Alert.alert("Falta nombre", "Indica el nombre de la medicación.");
+    if (!patientId) {
+      Alert.alert("Error", "Paciente no identificado");
+      return;
+    }
+    if (!name.trim()) {
+      Alert.alert("Falta nombre", "Indica el nombre de la medicación.");
+      return;
+    }
+
     try {
-      await createMedication(uid, {
+      // 🔑 CLAVE: usamos patientId, NO uid del cuidador
+      await createMedication(patientId, {
         name: name.trim(),
         form: form.trim(),
         strength: strength.trim(),
         notes: notes.trim(),
       });
+
       Alert.alert("Listo", "Medicación guardada");
       router.back();
     } catch (e: any) {
@@ -55,52 +57,62 @@ export default function NewMedication() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12, backgroundColor: bgColor }}>
-      <Text style={{ fontSize: 22, fontWeight: "700", color: labelColor }}>
-        Nueva medicación
-      </Text>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <Text style={styles.title}>Nueva medicación</Text>
 
-      <Text style={{ fontWeight: "600", color: labelColor }}>Nombre *</Text>
+      <Text style={styles.label}>Nombre *</Text>
       <TextInput
-        placeholder="Ej: Paracetamol"
-        placeholderTextColor={placeholderColor}
+        style={styles.input}
+        placeholder="Paracetamol"
+        placeholderTextColor={Colors.muted}
         value={name}
         onChangeText={setName}
-        autoCapitalize="sentences"
-        style={inputStyle}
       />
 
-      <Text style={{ fontWeight: "600", color: labelColor }}>Forma</Text>
+      <Text style={styles.label}>Forma</Text>
       <TextInput
-        placeholder="Ej: Comprimido, jarabe…"
-        placeholderTextColor={placeholderColor}
+        style={styles.input}
+        placeholder="Comprimido, jarabe…"
+        placeholderTextColor={Colors.muted}
         value={form}
         onChangeText={setForm}
-        autoCapitalize="sentences"
-        style={inputStyle}
       />
 
-      <Text style={{ fontWeight: "600", color: labelColor }}>Dosis</Text>
+      <Text style={styles.label}>Dosis</Text>
       <TextInput
-        placeholder="Ej: 500 mg"
-        placeholderTextColor={placeholderColor}
+        style={styles.input}
+        placeholder="500 mg"
+        placeholderTextColor={Colors.muted}
         value={strength}
         onChangeText={setStrength}
-        style={inputStyle}
       />
 
-      <Text style={{ fontWeight: "600", color: labelColor }}>Notas</Text>
+      <Text style={styles.label}>Notas</Text>
       <TextInput
-        placeholder="Ej: Tomar con comida"
-        placeholderTextColor={placeholderColor}
+        style={[styles.input, { minHeight: 90 }]}
+        multiline
+        placeholder="Tomar con comida"
+        placeholderTextColor={Colors.muted}
         value={notes}
         onChangeText={setNotes}
-        multiline
-        style={{ ...inputStyle, minHeight: 90, textAlignVertical: "top" as const }}
       />
 
-      <Button title="Guardar" onPress={save} />
-      <Button title="Cancelar" onPress={() => router.back()} />
+      <PrimaryButton title="Guardar" onPress={save} />
+      <PrimaryButton title="Cancelar" variant="danger" onPress={() => router.back()} />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 16 },
+  title: { fontSize: 22, fontWeight: "700", color: Colors.text, marginBottom: 12 },
+  label: { color: Colors.text, fontWeight: "600", marginTop: 10 },
+  input: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 12,
+    color: Colors.text,
+    marginTop: 4,
+  },
+});

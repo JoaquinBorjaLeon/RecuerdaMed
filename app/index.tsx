@@ -1,14 +1,21 @@
 // app/index.tsx
 import { useEffect, useState } from "react";
-import { View, Text, TextInput, Button, Alert, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  ActivityIndicator,
+} from "react-native";
 import { useRouter } from "expo-router";
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
 } from "firebase/auth";
+
 import { auth } from "./src/lib/firebase";
-import { ensurePatientProfile } from "./src/api/patients";
+import { getUserById } from "./src/api/users";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -16,19 +23,26 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Si hay sesión, asegura perfil y navega a Home
+  // Si hay sesión, comprobar si tiene perfil
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
-      if (u) {
-        try {
-          await ensurePatientProfile(u.uid);
+      if (!u) return;
+
+      try {
+        const profile = await getUserById(u.uid);
+
+        if (!profile) {
+          // Usuario sin perfil → completar registro
+          router.replace("/register");
+        } else {
           router.replace("/home");
-        } catch (e: any) {
-          console.warn("ensurePatientProfile error:", e?.message);
         }
+      } catch (e) {
+        console.warn("Profile check error", e);
       }
     });
-    return () => unsub();
+
+    return unsub;
   }, [router]);
 
   function validate() {
@@ -37,7 +51,7 @@ export default function Login() {
       return false;
     }
     if (!email.includes("@")) {
-      Alert.alert("Email no válido", "Revisa el formato del email.");
+      Alert.alert("Email no válido");
       return false;
     }
     if (pass.length < 6) {
@@ -49,6 +63,7 @@ export default function Login() {
 
   async function handleLogin() {
     if (!validate()) return;
+
     try {
       setLoading(true);
       await signInWithEmailAndPassword(auth, email.trim(), pass);
@@ -59,43 +74,27 @@ export default function Login() {
     }
   }
 
-  async function handleRegister() {
-    if (!validate()) return;
-    try {
-      setLoading(true);
-      await createUserWithEmailAndPassword(auth, email.trim(), pass);
-      Alert.alert("Cuenta creada", "Sesión iniciada.");
-    } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "No se pudo registrar");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   return (
     <View style={{ flex: 1, justifyContent: "center", padding: 24, gap: 12 }}>
-      <Text style={{ fontSize: 24, marginBottom: 8 }}>RecuerdaMed</Text>
+      <Text style={{ fontSize: 26, fontWeight: "700", marginBottom: 12 }}>
+        RecuerdaMed
+      </Text>
 
       <TextInput
         placeholder="Email"
         autoCapitalize="none"
-        autoCorrect={false}
         keyboardType="email-address"
-        textContentType="username"
         value={email}
         onChangeText={setEmail}
-        style={{ borderWidth: 1, padding: 12, borderRadius: 8 }}
+        style={{ borderWidth: 1, padding: 12, borderRadius: 10 }}
       />
 
       <TextInput
         placeholder="Contraseña"
         secureTextEntry
-        autoCapitalize="none"
-        autoCorrect={false}
-        textContentType="password"
         value={pass}
         onChangeText={setPass}
-        style={{ borderWidth: 1, padding: 12, borderRadius: 8 }}
+        style={{ borderWidth: 1, padding: 12, borderRadius: 10 }}
       />
 
       {loading ? (
@@ -103,7 +102,10 @@ export default function Login() {
       ) : (
         <>
           <Button title="Iniciar sesión" onPress={handleLogin} />
-          <Button title="Crear cuenta" onPress={handleRegister} />
+          <Button
+            title="Crear cuenta"
+            onPress={() => router.push("/register")}
+          />
         </>
       )}
     </View>

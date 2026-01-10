@@ -47,22 +47,27 @@ export async function cancelTomaNotification(notificationId: string) {
   await Notifications.cancelScheduledNotificationAsync(notificationId);
 }
 
-export async function notifyCaregivers(tokens: string[], message: string) {
+export async function sendPushToCaregivers(
+  tokens: string[],
+  title: string,
+  body: string
+) {
   if (!tokens.length) return;
-
-  const payloads = tokens.map(token => ({
-    to: token,
-    title: "💊 RecuerdaMed",
-    body: message,
-  }));
 
   await fetch("https://exp.host/--/api/v2/push/send", {
     method: "POST",
     headers: {
-      "Accept": "application/json",
+      Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(payloads),
+    body: JSON.stringify(
+      tokens.map((token) => ({
+        to: token,
+        sound: "default",
+        title,
+        body,
+      }))
+    ),
   });
 }
 

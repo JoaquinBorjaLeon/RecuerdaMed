@@ -14,9 +14,12 @@ import { createSchedule } from "../../../src/api/schedules";
 import type { SchedulePattern } from "../../../src/types";
 
 export default function NewSchedule() {
-  const { id } = useLocalSearchParams<{ id: string }>(); // medId
-  const router = useRouter();
+  const { id, patientId } = useLocalSearchParams<{
+    id: string;          // medId
+    patientId?: string; // 👈 viene SOLO si es cuidador
+  }>();
 
+  const router = useRouter();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
 
@@ -77,9 +80,12 @@ export default function NewSchedule() {
 
     const toleranceMinutes = parseInt(tol) || 30;
 
+    // ✅ CLAVE: paciente real
+    const realPatientId = patientId ?? uid;
+
     const base: any = {
       medId: String(id),
-      patientId: uid,
+      patientId: realPatientId,
       startDate: start,
       endDate: end,
       toleranceMinutes,
@@ -119,7 +125,13 @@ export default function NewSchedule() {
     try {
       await createSchedule(base);
       Alert.alert("Listo", "Planificación guardada");
-      router.back();
+
+      // 🔀 Navegación correcta
+      if (patientId) {
+        router.replace(`/care/patient/${patientId}`);
+      } else {
+        router.replace(`/meds/${id}`);
+      }
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "No se pudo guardar");
     }

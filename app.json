@@ -1,7 +1,13 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "RecuerdaMed",
+    "slug": "recuerda-med",
+    "extra": {
+      "eas": {
+        "projectId": "ab00a2e0-9e70-41f2-8ad6-c738eac64b8f"
+      },
+      "router": {}
+    },
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -19,7 +25,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.qinochico.recuerdamed"
     },
     "web": {
       "output": "static",
@@ -38,11 +45,13 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "owner": "qinochico"
   }
 }

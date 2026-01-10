@@ -1,25 +1,43 @@
-import { addDoc, collection, serverTimestamp, query, where, getDocs, orderBy } from "firebase/firestore";
+// src/api/meds.ts
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "../lib/firebase";
-import type { Medication } from "../types";
+import { canDeleteMedication } from "./tomas";
 
-export async function createMedication(uid: string, data: Omit<Medication,"id"|"patientId"|"createdAt">) {
-  const ref = await addDoc(collection(db, "medications"), {
-  patientId: uid,
-  name: data.name,
-  form: data.form ?? "",
-  strength: data.strength ?? "",
-  notes: data.notes ?? "",
-  createdAt: serverTimestamp(),
-});
-  return ref.id;
+type CreateMedicationInput = {
+  name: string;
+  form?: string;
+  strength?: string;
+  notes?: string;
+};
+
+export async function createMedication(
+  patientId: string,
+  data: CreateMedicationInput
+) {
+  if (!patientId) {
+    throw new Error("patientId requerido");
+  }
+
+  await addDoc(collection(db, "medications"), {
+    patientId,
+    name: data.name,
+    form: data.form ?? "",
+    strength: data.strength ?? "",
+    notes: data.notes ?? "",
+    createdAt: serverTimestamp(),
+  });
 }
 
-export async function listMyMedications(uid: string) {
-  const q = query(
-    collection(db, "medications"),
-    where("patientId","==", uid),
-    orderBy("createdAt","desc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as Medication[];
+export async function deleteMedication(medicationId: string) {
+  const allowed = await canDeleteMedication(medicationId);
+  if (!allowed) {
+    throw new Error("No se puede borrar una medicación con tomas futuras");
+  }
+  await deleteDoc(doc(db, "medications", medicationId));
 }

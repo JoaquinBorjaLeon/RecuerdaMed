@@ -25,3 +25,15 @@ export async function savePushToken(patientId: string, token: string) {
     lastSeenAt: serverTimestamp(),
   });
 }
+
+export async function getPushTokensByUserIds(userIds: string[]) {
+  if (!userIds.length) return [];
+
+  const q = query(
+    collection(db, "pushTokens"),
+    where("userId", "in", userIds)
+  );
+
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => d.data().token as string);
+}
