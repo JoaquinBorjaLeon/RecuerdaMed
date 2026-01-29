@@ -5,12 +5,24 @@ import {
   TextInput,
   Button,
   Alert,
+  Platform,
   useColorScheme,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  getDocs,
+} from "firebase/firestore";
 import { db } from "../../../../src/lib/firebase";
 import type { Schedule, SchedulePattern } from "../../../../src/types";
+import { deleteScheduleAndTomas } from "../../../../src/api/schedules";
 
 function parseDate(input: string): string | null {
   const s = input.trim();
@@ -18,6 +30,10 @@ function parseDate(input: string): string | null {
   const m = s.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
   if (m) return `${m[3]}-${m[2]}-${m[1]}`;
   return null;
+}
+
+function isValidTime(value: string) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 }
 
 export default function EditSchedule() {
@@ -34,6 +50,7 @@ export default function EditSchedule() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [tol, setTol] = useState("30");
+  const [locked, setLocked] = useState(false);
 
   const inputStyle = {
     borderWidth: 1,
@@ -68,6 +85,31 @@ export default function EditSchedule() {
         else setDow("");
         if (s.everyXHours) setEvery(String(s.everyXHours));
         else setEvery("8");
+
+        if (s.endDate) {
+          const lastTomaSnap = await getDocs(
+            query(
+              collection(db, "tomas"),
+              where("scheduleId", "==", String(sid)),
+              orderBy("windowEnd", "desc"),
+              limit(1)
+            )
+          );
+
+          if (!lastTomaSnap.empty) {
+            const last = lastTomaSnap.docs[0].data() as any;
+            const lastWindowEnd = new Date(last.windowEnd);
+            setLocked(new Date() > lastWindowEnd);
+          } else {
+            const [y, m, d] = s.endDate.split("-").map(Number);
+            const endOfDay = new Date(y, m - 1, d, 23, 59, 59, 999);
+            const tolMinutes = s.toleranceMinutes ?? 30;
+            const endWithTolerance = new Date(
+              endOfDay.getTime() + tolMinutes * 60000
+            );
+            setLocked(new Date() > endWithTolerance);
+          }
+        }
       } catch (e: any) {
         Alert.alert("Error", e?.message ?? "No se pudo cargar la planificación");
         router.back();
@@ -76,6 +118,10 @@ export default function EditSchedule() {
   }, [sid, router]);
 
   async function save() {
+    if (locked) {
+      Alert.alert("No editable", "La planificación ya ha finalizado");
+      return;
+    }
     const start = parseDate(startDate);
     const end = endDate.trim() ? parseDate(endDate) : null;
 
@@ -102,6 +148,11 @@ export default function EditSchedule() {
       const t = times.split(",").map((s) => s.trim()).filter(Boolean);
       if (!t.length) {
         Alert.alert("Faltan horas", "Indica al menos una (HH:mm)");
+        return;
+      }
+      const invalid = t.find((x) => !isValidTime(x));
+      if (invalid) {
+        Alert.alert("Hora inválida", `Formato inválido: ${invalid}`);
         return;
       }
       patch.times = t;
@@ -140,11 +191,49 @@ export default function EditSchedule() {
     }
   }
 
+  async function handleDelete() {
+    const confirmed =
+      Platform.OS === "web"
+        ? window.confirm("¿Eliminar esta planificación?")
+        : await new Promise<boolean>((resolve) => {
+            Alert.alert(
+              "Eliminar planificación",
+              "¿Seguro que quieres eliminar esta planificación?",
+              [
+                { text: "Cancelar", style: "cancel", onPress: () => resolve(false) },
+                { text: "Eliminar", style: "destructive", onPress: () => resolve(true) },
+              ]
+            );
+          });
+
+    if (!confirmed) return;
+
+    try {
+      await deleteScheduleAndTomas(String(sid));
+      if (Platform.OS === "web") {
+        window.alert("Planificación eliminada");
+      } else {
+        Alert.alert("OK", "Planificación eliminada");
+      }
+      router.back();
+    } catch (e: any) {
+      const msg = e?.message ?? "No se pudo eliminar";
+      if (Platform.OS === "web") window.alert(msg);
+      else Alert.alert("Error", msg);
+    }
+  }
+
   return (
     <View style={{ flex: 1, padding: 16, gap: 12, backgroundColor: bgColor }}>
       <Text style={{ fontSize: 22, fontWeight: "700", color: textColor }}>
         Editar planificación
       </Text>
+
+      {locked && (
+        <Text style={{ color: textColor, fontWeight: "600" }}>
+          Planificación completada
+        </Text>
+      )}
 
       <Text style={{ color: textColor }}>Patrón</Text>
       <TextInput
@@ -153,6 +242,7 @@ export default function EditSchedule() {
         placeholder="DAILY | DOW | EVERY_X_HOURS"
         placeholderTextColor={placeholderColor}
         style={inputStyle}
+        editable={!locked}
       />
 
       {(pattern === "DAILY" || pattern === "DOW") && (
@@ -164,6 +254,7 @@ export default function EditSchedule() {
             placeholder="08:00,20:00"
             placeholderTextColor={placeholderColor}
             style={inputStyle}
+            editable={!locked}
           />
         </>
       )}
@@ -177,6 +268,7 @@ export default function EditSchedule() {
             placeholder="1,2,3,4,5"
             placeholderTextColor={placeholderColor}
             style={inputStyle}
+            editable={!locked}
           />
         </>
       )}
@@ -191,6 +283,7 @@ export default function EditSchedule() {
             placeholder="8"
             placeholderTextColor={placeholderColor}
             style={inputStyle}
+            editable={!locked}
           />
         </>
       )}
@@ -202,6 +295,7 @@ export default function EditSchedule() {
         placeholder="YYYY-MM-DD o DD/MM/YYYY"
         placeholderTextColor={placeholderColor}
         style={inputStyle}
+        editable={!locked}
       />
 
       <Text style={{ color: textColor }}>Fin (opcional)</Text>
@@ -211,6 +305,7 @@ export default function EditSchedule() {
         placeholder="YYYY-MM-DD o DD/MM/YYYY"
         placeholderTextColor={placeholderColor}
         style={inputStyle}
+        editable={!locked}
       />
 
       <Text style={{ color: textColor }}>Tolerancia ± minutos</Text>
@@ -221,9 +316,15 @@ export default function EditSchedule() {
         placeholder="30"
         placeholderTextColor={placeholderColor}
         style={inputStyle}
+        editable={!locked}
       />
 
-      <Button title="Guardar cambios" onPress={save} />
+      {!locked && (
+        <>
+          <Button title="Guardar cambios" onPress={save} />
+          <Button title="Eliminar planificación" color="#dc2626" onPress={handleDelete} />
+        </>
+      )}
       <Button title="Cancelar" onPress={() => router.back()} />
     </View>
   );

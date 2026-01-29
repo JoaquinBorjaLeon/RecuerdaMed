@@ -8,6 +8,8 @@ import {
   query,
   serverTimestamp,
   where,
+  deleteDoc,
+  doc,
 } from "firebase/firestore";
 
 import { db } from "../lib/firebase";
@@ -65,4 +67,20 @@ export function listenSchedulesByMed(
       )
     );
   });
+}
+
+// Eliminar planificación y sus tomas asociadas
+export async function deleteScheduleAndTomas(scheduleId: string) {
+  // 1) borrar tomas vinculadas
+  const q = query(
+    collection(db, "tomas"),
+    where("scheduleId", "==", scheduleId)
+  );
+  const snap = await getDocs(q);
+  for (const d of snap.docs) {
+    await deleteDoc(doc(db, "tomas", d.id));
+  }
+
+  // 2) borrar planificación
+  await deleteDoc(doc(db, "schedules", scheduleId));
 }

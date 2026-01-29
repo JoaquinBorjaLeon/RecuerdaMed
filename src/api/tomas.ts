@@ -15,6 +15,7 @@ import {
 import { db } from "../lib/firebase";
 import type { Toma, Schedule } from "../types";
 import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
 import { getActiveCaregivers } from "./careLinks";
 import { getPushTokensByUserIds } from "./pushTokens";
 import { sendPushToCaregivers } from "./notifications";
@@ -106,17 +107,18 @@ export async function confirmToma(tomaId: string, toma: Toma) {
 export async function updateTomaStatusIfNeeded(toma: Toma) {
   const now = new Date().toISOString();
 
-  if (
-    toma.status === "PLANNED" &&
-    now >= toma.windowStart &&
-    now <= toma.windowEnd
-  ) {
-    await updateDoc(doc(db, "tomas", toma.id), { status: "DUE" });
-    return;
+  if (toma.status === "CONFIRMED") return;
+
+  let nextStatus: Toma["status"] = "PLANNED";
+
+  if (now >= toma.windowStart && now <= toma.windowEnd) {
+    nextStatus = "DUE";
+  } else if (now > toma.windowEnd) {
+    nextStatus = "EXPIRED";
   }
 
-  if (toma.status === "DUE" && now > toma.windowEnd) {
-    await updateDoc(doc(db, "tomas", toma.id), { status: "EXPIRED" });
+  if (toma.status !== nextStatus) {
+    await updateDoc(doc(db, "tomas", toma.id), { status: nextStatus });
   }
 }
 
@@ -154,24 +156,30 @@ export async function generateTomasFromSchedule(
 
     if (await tomaExistsByDedupeKey(schedule.patientId, dedupeKey)) return;
 
-    const notificationId =
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: "RecuerdaMed",
-          body: "Es hora de tomar tu medicación",
-          data: {
-            tomaPlannedAt: plannedISO,
-            scheduleId: schedule.id,
-            medId: schedule.medId,
+    let notificationId: string | undefined;
+    if (Platform.OS !== "web") {
+      try {
+        notificationId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "RecuerdaMed",
+            body: "Es hora de tomar tu medicación",
+            data: {
+              tomaPlannedAt: plannedISO,
+              scheduleId: schedule.id,
+              medId: schedule.medId,
+            },
           },
-        },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: plannedAt,
-        },
-      });
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DATE,
+            date: plannedAt,
+          },
+        });
+      } catch (e) {
+        // En web no está disponible; no bloqueamos la creación
+      }
+    }
 
-    await createToma({
+    const tomaPayload: Omit<Toma, "id" | "createdAt"> = {
       scheduleId: schedule.id,
       medId: schedule.medId,
       patientId: schedule.patientId,
@@ -183,9 +191,14 @@ export async function generateTomasFromSchedule(
         new Date(plannedAt.getTime() + tolerance * 60000)
       ),
       status: "PLANNED",
-      notificationId,
       dedupeKey,
-    });
+    };
+
+    if (notificationId) {
+      tomaPayload.notificationId = notificationId;
+    }
+
+    await createToma(tomaPayload);
   };
 
   if (schedule.pattern === "DAILY" || schedule.pattern === "DOW") {
@@ -223,15 +236,25 @@ export async function generateTomasFromSchedule(
 export async function canDeleteMedication(
   medicationId: string
 ): Promise<boolean> {
-  const now = new Date().toISOString();
+  // Bloqueamos borrado si existe *cualquier* toma futura del medicamento,
+  // independientemente del status (PLANNED o DUE principalmente).
+  // Usamos limit(1) para que sea rápido.
+  const nowIso = new Date().toISOString();
 
-  const q = query(
-    collection(db, "tomas"),
-    where("medId", "==", medicationId),
-    where("plannedAt", ">", now),
-    where("status", "==", "PLANNED")
-  );
+  try {
+    const q = query(
+      collection(db, "tomas"),
+      where("medId", "==", medicationId),
+      where("plannedAt", ">", nowIso),
+      limit(1)
+    );
 
-  const snap = await getDocs(q);
-  return snap.empty;
+    const snap = await getDocs(q);
+    return snap.empty;
+  } catch (e: any) {
+    // Si por lo que sea la query falla, NO permitimos borrar (fail-safe)
+    console.warn("canDeleteMedication error:", e?.code, e?.message, e);
+    return false;
+  }
 }
+

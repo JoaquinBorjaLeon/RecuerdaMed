@@ -1,4 +1,3 @@
-// src/api/meds.ts
 import {
   addDoc,
   collection,
@@ -6,8 +5,7 @@ import {
   deleteDoc,
   doc,
 } from "firebase/firestore";
-import { db } from "../lib/firebase";
-import { canDeleteMedication } from "./tomas";
+import { auth, db } from "../lib/firebase";
 
 type CreateMedicationInput = {
   name: string;
@@ -20,12 +18,14 @@ export async function createMedication(
   patientId: string,
   data: CreateMedicationInput
 ) {
-  if (!patientId) {
-    throw new Error("patientId requerido");
-  }
+  if (!patientId) throw new Error("patientId requerido");
+
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error("Usuario no autenticado");
 
   await addDoc(collection(db, "medications"), {
     patientId,
+    createdBy: uid,
     name: data.name,
     form: data.form ?? "",
     strength: data.strength ?? "",
@@ -34,10 +34,6 @@ export async function createMedication(
   });
 }
 
-export async function deleteMedication(medicationId: string) {
-  const allowed = await canDeleteMedication(medicationId);
-  if (!allowed) {
-    throw new Error("No se puede borrar una medicación con tomas futuras");
-  }
-  await deleteDoc(doc(db, "medications", medicationId));
+export async function deleteMedication(medId: string) {
+  await deleteDoc(doc(db, "medications", medId));
 }

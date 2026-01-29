@@ -97,6 +97,11 @@ export default function InvitesScreen() {
           </Card>
         )}
       />
+
+      <PrimaryButton
+        title="Volver al inicio"
+        onPress={() => router.replace("/home")}
+      />
     </View>
   );
 }

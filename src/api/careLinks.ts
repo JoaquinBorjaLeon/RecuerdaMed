@@ -1,12 +1,12 @@
 import {
-  addDoc,
-  collection,
+  setDoc,
+  doc,
   query,
   where,
   getDocs,
+  collection,
   serverTimestamp,
   updateDoc,
-  doc,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { getUserById, UserProfile } from "./users";
@@ -27,6 +27,7 @@ export type CareLink = {
 
 /**
  * Paciente invita a cuidador
+ * ID = caregiverEmail (temporal, hasta aceptar)
  */
 export async function inviteCaregiver(
   patientId: string,
@@ -35,7 +36,9 @@ export async function inviteCaregiver(
   const email = caregiverEmail.trim().toLowerCase();
   if (!email) throw new Error("Email inválido");
 
-  await addDoc(collection(db, "careLinks"), {
+  const tempId = `${email}_${patientId}`;
+
+  await setDoc(doc(db, "careLinks", tempId), {
     patientId,
     caregiverEmail: email,
     status: "PENDING",
@@ -61,13 +64,34 @@ export async function getPendingInvitesByEmail(email: string) {
 
 /**
  * Aceptar invitación
+ * ⚠️ Se reescribe el documento con ID determinista
  */
-export async function acceptInvite(careLinkId: string, caregiverId: string) {
-  await updateDoc(doc(db, "careLinks", careLinkId), {
+export async function acceptInvite(
+  oldCareLinkId: string,
+  caregiverId: string
+) {
+  const oldRef = doc(db, "careLinks", oldCareLinkId);
+  const snap = await getDocs(
+    query(collection(db, "careLinks"), where("__name__", "==", oldCareLinkId))
+  );
+
+  if (snap.empty) throw new Error("Invitación no encontrada");
+
+  const data = snap.docs[0].data();
+  const patientId = data.patientId;
+
+  const newId = `${caregiverId}_${patientId}`;
+
+  await setDoc(doc(db, "careLinks", newId), {
+    patientId,
     caregiverId,
+    caregiverEmail: data.caregiverEmail,
     status: "ACTIVE",
+    createdAt: data.createdAt,
     acceptedAt: serverTimestamp(),
   });
+
+  await updateDoc(oldRef, { status: "REMOVED" });
 }
 
 /**
@@ -82,17 +106,25 @@ export async function rejectInvite(careLinkId: string) {
 
 /**
  * Eliminar relación paciente–cuidador
- * (lo puede hacer paciente o cuidador)
+ * - Si pasas caregiverId + patientId: usa ID determinista
+ * - Si pasas un único linkId: lo usa directamente
  */
-export async function removeCareLink(careLinkId: string) {
-  await updateDoc(doc(db, "careLinks", careLinkId), {
+export async function removeCareLink(
+  caregiverIdOrLinkId: string,
+  patientId?: string
+) {
+  const id = patientId
+    ? `${caregiverIdOrLinkId}_${patientId}`
+    : caregiverIdOrLinkId;
+
+  await updateDoc(doc(db, "careLinks", id), {
     status: "REMOVED",
     removedAt: serverTimestamp(),
   });
 }
 
 /**
- * Cuidadores activos de un paciente (con careLinkId)
+ * Cuidadores activos de un paciente
  */
 export async function getActiveCareLinksForPatient(
   patientId: string
@@ -134,7 +166,6 @@ export async function getPatientsForCaregiver(
   );
 
   const snap = await getDocs(q);
-
   const patients = await Promise.all(
     snap.docs.map((d) => getUserById(d.data().patientId))
   );
@@ -143,9 +174,12 @@ export async function getPatientsForCaregiver(
 }
 
 /**
- * IDs de cuidadores activos (para notificaciones)
+ * IDs de cuidadores activos de un paciente
+ * (para notificaciones y permisos)
  */
-export async function getActiveCaregivers(patientId: string): Promise<string[]> {
+export async function getActiveCaregivers(
+  patientId: string
+): Promise<string[]> {
   const q = query(
     collection(db, "careLinks"),
     where("patientId", "==", patientId),
@@ -153,6 +187,7 @@ export async function getActiveCaregivers(patientId: string): Promise<string[]> 
   );
 
   const snap = await getDocs(q);
+
   return snap.docs
     .map((d) => d.data().caregiverId as string)
     .filter(Boolean);

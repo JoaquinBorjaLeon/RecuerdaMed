@@ -5,6 +5,7 @@ import {
   TextInput,
   Button,
   Alert,
+  Platform,
   useColorScheme,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -63,6 +64,17 @@ export default function NewSchedule() {
     return null;
   }
 
+  function isValidTime(value: string) {
+    return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+  }
+
+  function todayYMD() {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
+
   async function save() {
     if (!uid || !id) return;
 
@@ -75,6 +87,16 @@ export default function NewSchedule() {
     }
     if (endDate.trim() && !end) {
       Alert.alert("Fecha fin inválida", "Usa YYYY-MM-DD o DD/MM/YYYY");
+      return;
+    }
+
+    const today = todayYMD();
+    if (start < today) {
+      Alert.alert("Fecha inicio inválida", "No puede ser anterior a hoy");
+      return;
+    }
+    if (end && end < start) {
+      Alert.alert("Fecha fin inválida", "No puede ser anterior al inicio");
       return;
     }
 
@@ -96,6 +118,11 @@ export default function NewSchedule() {
       const t = times.split(",").map((s) => s.trim()).filter(Boolean);
       if (!t.length) {
         Alert.alert("Faltan horas", "Indica al menos una (HH:mm)");
+        return;
+      }
+      const invalid = t.find((x) => !isValidTime(x));
+      if (invalid) {
+        Alert.alert("Hora inválida", `Formato inválido: ${invalid}`);
         return;
       }
       base.times = t;
@@ -124,16 +151,25 @@ export default function NewSchedule() {
 
     try {
       await createSchedule(base);
-      Alert.alert("Listo", "Planificación guardada");
 
-      // 🔀 Navegación correcta
+      // Navegación directa (más fiable en web)
       if (patientId) {
-        router.replace(`/care/patient/${patientId}`);
+        router.replace({
+          pathname: "/care/patient/[id]",
+          params: { id: patientId },
+        });
       } else {
-        router.replace(`/meds/${id}`);
+        router.replace({
+          pathname: "/meds/[id]",
+          params: { id: String(id) },
+        });
       }
     } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "No se pudo guardar");
+      if (Platform.OS === "web") {
+        window.alert(e?.message ?? "No se pudo guardar");
+      } else {
+        Alert.alert("Error", e?.message ?? "No se pudo guardar");
+      }
     }
   }
 

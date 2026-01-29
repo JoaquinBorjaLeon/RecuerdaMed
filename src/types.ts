@@ -14,6 +14,7 @@ export type Medication = {
   strength?: string;          // 500 mg...
   notes?: string;
   createdAt: any;
+  createdBy?: string;          
 };
 
 export type SchedulePattern = 'DAILY' | 'DOW' | 'EVERY_X_HOURS';

@@ -1,6 +1,6 @@
 // app/home.tsx
 import { useEffect, useRef, useState } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { View, Text, FlatList, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
 
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -48,17 +48,14 @@ export default function Home() {
         return;
       }
 
-      // 🔐 Cargar perfil del usuario
+      // 🔐 Perfil
       const profile = await getUserById(u.uid);
-      if (!profile) {
-        console.warn("Perfil de usuario no encontrado");
-        return;
-      }
+      if (!profile) return;
 
       setUser(profile);
 
-      // 🔔 Notificaciones (solo una vez)
-      if (!notificationsReady) {
+      // 🔔 Push notifications (solo nativo)
+      if (!notificationsReady && Platform.OS !== "web") {
         try {
           const token = await registerForPushNotifications();
           await savePushToken(u.uid, token);
@@ -68,7 +65,7 @@ export default function Home() {
         }
       }
 
-      // 👤 SOLO PACIENTE escucha medicaciones
+      // 👤 SOLO paciente escucha sus medicaciones
       if (profile.role === "PATIENT") {
         const q = query(
           collection(db, "medications"),
@@ -171,6 +168,12 @@ export default function Home() {
       <PrimaryButton
         title="Invitar cuidador"
         onPress={() => router.push("/care/invite")}
+      />
+
+      {/* ✅ NUEVO: solo paciente */}
+      <PrimaryButton
+        title="Gestionar cuidadores"
+        onPress={() => router.push("/care/patient/caregivers")}
       />
 
       <PrimaryButton

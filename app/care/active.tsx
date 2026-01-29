@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, Alert } from "react-native";
+import { View, Text, FlatList, Alert, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -32,23 +32,16 @@ export default function MyCaregivers() {
   }, [router]);
 
   async function handleRemove(linkId: string) {
-    Alert.alert(
-      "Eliminar cuidador",
-      "¿Seguro que quieres eliminar este cuidador?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Eliminar",
-          style: "destructive",
-          onPress: async () => {
-            await removeCareLink(linkId);
-            setItems((prev) =>
-              prev.filter((i) => i.linkId !== linkId)
-            );
-          },
-        },
-      ]
-    );
+    try {
+      await removeCareLink(linkId);
+      setItems((prev) => prev.filter((i) => i.linkId !== linkId));
+    } catch (e: any) {
+      if (Platform.OS === "web") {
+        window.alert(e?.message ?? "No se pudo eliminar el cuidador");
+      } else {
+        Alert.alert("Error", e?.message ?? "No se pudo eliminar el cuidador");
+      }
+    }
   }
 
   return (

@@ -29,11 +29,24 @@ export async function savePushToken(patientId: string, token: string) {
 export async function getPushTokensByUserIds(userIds: string[]) {
   if (!userIds.length) return [];
 
-  const q = query(
-    collection(db, "pushTokens"),
-    where("userId", "in", userIds)
-  );
+  // Firestore "in" permite máx 10 elementos
+  const chunks: string[][] = [];
+  for (let i = 0; i < userIds.length; i += 10) {
+    chunks.push(userIds.slice(i, i + 10));
+  }
 
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => d.data().token as string);
+  const tokens: string[] = [];
+  for (const chunk of chunks) {
+    const q = query(
+      collection(db, "push_tokens"),
+      where("patientId", "in", chunk)
+    );
+    const snap = await getDocs(q);
+    snap.docs.forEach((d) => {
+      const token = d.data().token as string;
+      if (token) tokens.push(token);
+    });
+  }
+
+  return tokens;
 }

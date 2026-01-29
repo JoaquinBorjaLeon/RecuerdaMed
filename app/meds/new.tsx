@@ -10,49 +10,55 @@ import { PrimaryButton } from "../../src/components/primaryButton";
 
 export default function NewMedication() {
   const router = useRouter();
-  const { patientId } = useLocalSearchParams<{ patientId?: string }>();
+  const params = useLocalSearchParams<{ patientId?: string }>();
 
-  const [uid, setUid] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [form, setForm] = useState("");
   const [strength, setStrength] = useState("");
   const [notes, setNotes] = useState("");
 
+  // 🔐 Auth
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
       if (!u) {
         router.replace("/");
         return;
       }
-      setUid(u.uid);
+      setUserId(u.uid);
     });
   }, [router]);
 
   async function save() {
-    // 🔴 validaciones importantes
-    if (!uid) return;
-    if (!patientId) {
-      Alert.alert("Error", "Paciente no identificado");
-      return;
-    }
-    if (!name.trim()) {
-      Alert.alert("Falta nombre", "Indica el nombre de la medicación.");
-      return;
-    }
-
     try {
-      // 🔑 CLAVE: usamos patientId, NO uid del cuidador
-      await createMedication(patientId, {
+      if (!userId) throw new Error("Usuario no autenticado");
+      if (!name.trim()) throw new Error("El nombre es obligatorio");
+
+      // ✅ CLAVE: si no viene patientId → es el propio paciente
+      const realPatientId = params.patientId ?? userId;
+
+      await createMedication(realPatientId, {
         name: name.trim(),
-        form: form.trim(),
-        strength: strength.trim(),
-        notes: notes.trim(),
+        form,
+        strength,
+        notes,
       });
 
-      Alert.alert("Listo", "Medicación guardada");
-      router.back();
+      Alert.alert("OK", "Medicación creada");
+
+      // 🔁 Redirección correcta
+      if (params.patientId) {
+        // cuidador
+        router.replace({
+          pathname: "/care/patient/[id]",
+          params: { id: params.patientId },
+        });
+      } else {
+        // paciente
+        router.replace("/home");
+      }
     } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "No se pudo guardar");
+      Alert.alert("Error", e.message ?? "No se pudo guardar");
     }
   }
 
@@ -63,38 +69,38 @@ export default function NewMedication() {
       <Text style={styles.label}>Nombre *</Text>
       <TextInput
         style={styles.input}
-        placeholder="Paracetamol"
-        placeholderTextColor={Colors.muted}
         value={name}
         onChangeText={setName}
+        placeholder="Paracetamol"
+        placeholderTextColor={Colors.muted}
       />
 
       <Text style={styles.label}>Forma</Text>
       <TextInput
         style={styles.input}
-        placeholder="Comprimido, jarabe…"
-        placeholderTextColor={Colors.muted}
         value={form}
         onChangeText={setForm}
+        placeholder="Comprimido, jarabe…"
+        placeholderTextColor={Colors.muted}
       />
 
       <Text style={styles.label}>Dosis</Text>
       <TextInput
         style={styles.input}
-        placeholder="500 mg"
-        placeholderTextColor={Colors.muted}
         value={strength}
         onChangeText={setStrength}
+        placeholder="500 mg"
+        placeholderTextColor={Colors.muted}
       />
 
       <Text style={styles.label}>Notas</Text>
       <TextInput
         style={[styles.input, { minHeight: 90 }]}
         multiline
-        placeholder="Tomar con comida"
-        placeholderTextColor={Colors.muted}
         value={notes}
         onChangeText={setNotes}
+        placeholder="Tomar con comida"
+        placeholderTextColor={Colors.muted}
       />
 
       <PrimaryButton title="Guardar" onPress={save} />

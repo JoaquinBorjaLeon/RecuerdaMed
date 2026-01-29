@@ -1,7 +1,7 @@
 // app/tomas.tsx
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, Alert, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../src/lib/firebase";
 
@@ -24,24 +24,34 @@ function fmt(iso: string) {
 
 export default function TomasScreen() {
   const router = useRouter();
+  const { patientId } = useLocalSearchParams<{ patientId?: string }>();
   const [tomas, setTomas] = useState<Toma[]>([]);
 
   useEffect(() => {
+    let unsubTomas: null | (() => void) = null;
+
     const unsubAuth = onAuthStateChanged(auth, (u) => {
       if (!u) {
         router.replace("/");
         return;
       }
 
-      const unsubTomas = listenUpcomingTomas(u.uid, (items) => {
+      if (unsubTomas) {
+        unsubTomas();
+        unsubTomas = null;
+      }
+
+      const targetPatientId = patientId ?? u.uid;
+      unsubTomas = listenUpcomingTomas(String(targetPatientId), (items) => {
         setTomas(items);
       });
-
-      return () => unsubTomas();
     });
 
-    return () => unsubAuth();
-  }, [router]);
+    return () => {
+      if (unsubTomas) unsubTomas();
+      unsubAuth();
+    };
+  }, [router, patientId]);
 
   async function handleConfirm(toma: Toma) {
     try {
@@ -54,7 +64,9 @@ export default function TomasScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <Text style={styles.title}>Mis tomas</Text>
+      <Text style={styles.title}>
+        {patientId ? "Tomas del paciente" : "Mis tomas"}
+      </Text>
 
       <FlatList
         data={tomas}
@@ -75,14 +87,21 @@ export default function TomasScreen() {
                 Ventana: {fmt(item.windowStart)} — {fmt(item.windowEnd)}
               </Text>
 
-              <PrimaryButton
-                title="Confirmar toma"
-                onPress={() => handleConfirm(item)}
-                disabled={!canConfirm}
-              />
+              {!patientId && (
+                <PrimaryButton
+                  title="Confirmar toma"
+                  onPress={() => handleConfirm(item)}
+                  disabled={!canConfirm}
+                />
+              )}
             </Card>
           );
         }}
+      />
+
+      <PrimaryButton
+        title="Volver"
+        onPress={() => router.back()}
       />
     </View>
   );

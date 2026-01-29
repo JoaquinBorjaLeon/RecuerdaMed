@@ -9,6 +9,7 @@ import { getPatientsForCaregiver } from "../../src/api/careLinks";
 import type { UserProfile } from "../../src/api/users";
 
 import { Card } from "../../src/components/card";
+import { PrimaryButton } from "../../src/components/primaryButton";
 import { Colors } from "../../src/theme/colors";
 
 export default function CaregiverPatientsScreen() {
@@ -58,6 +59,11 @@ export default function CaregiverPatientsScreen() {
             <Text style={styles.email}>{item.email}</Text>
           </Card>
         )}
+      />
+
+      <PrimaryButton
+        title="Volver"
+        onPress={() => router.replace("/home")}
       />
     </View>
   );
