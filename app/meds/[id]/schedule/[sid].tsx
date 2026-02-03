@@ -9,6 +9,7 @@ import {
   useColorScheme,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import type { Href } from "expo-router";
 import {
   doc,
   getDoc,
@@ -72,13 +73,23 @@ export default function EditSchedule() {
   const textColor = isDark ? "#F9FAFB" : "#111827";
   const bgColor = isDark ? "#0B1220" : "#FFFFFF";
 
+  const goToMed = () => {
+    router.replace({
+      pathname: "/meds/[id]",
+      params: {
+        id: String(id),
+        ...(patientId ? { patientId } : {}),
+      },
+    } as Href);
+  };
+
   useEffect(() => {
     (async () => {
       try {
         const snap = await getDoc(doc(db, "schedules", String(sid)));
         if (!snap.exists()) {
           Alert.alert("Error", "No existe la planificación");
-          router.back();
+          goToMed();
           return;
         }
         const s = snap.data() as Schedule;
@@ -119,7 +130,7 @@ export default function EditSchedule() {
         }
       } catch (e: any) {
         Alert.alert("Error", e?.message ?? "No se pudo cargar la planificación");
-        router.back();
+        goToMed();
       }
     })();
   }, [sid, router]);
@@ -192,7 +203,7 @@ export default function EditSchedule() {
 
       await updateDoc(doc(db, "schedules", String(sid)), patch);
       Alert.alert("Listo", "Planificación actualizada");
-      router.back();
+      goToMed();
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "No se pudo actualizar");
     }
@@ -219,25 +230,12 @@ export default function EditSchedule() {
       await deleteScheduleAndTomas(String(sid), patientId);
       if (Platform.OS === "web") {
         window.alert("Planificación eliminada");
-        router.replace({
-          pathname: "/meds/[id]",
-          params: {
-            id: String(id),
-            ...(patientId ? { patientId } : {}),
-          },
-        });
+        goToMed();
       } else {
         Alert.alert("OK", "Planificación eliminada", [
           {
             text: "Aceptar",
-            onPress: () =>
-              router.replace({
-                pathname: "/meds/[id]",
-                params: {
-                  id: String(id),
-                  ...(patientId ? { patientId } : {}),
-                },
-              }),
+            onPress: () => goToMed(),
           },
         ]);
       }
@@ -350,7 +348,7 @@ export default function EditSchedule() {
           <Button title="Eliminar planificación" color="#dc2626" onPress={handleDelete} />
         </>
       )}
-      <Button title="Cancelar" onPress={() => router.back()} />
+      <Button title="Cancelar" onPress={() => goToMed()} />
     </View>
   );
 }

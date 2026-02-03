@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, Alert, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import type { Href } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../src/lib/firebase";
 import { getUserById } from "../src/api/users";
@@ -25,7 +26,7 @@ function fmt(iso: string) {
 
 export default function TomasScreen() {
   const router = useRouter();
-  const { patientId } = useLocalSearchParams<{ patientId?: string }>();
+  const { patientId, tomaId } = useLocalSearchParams<{ patientId?: string; tomaId?: string }>();
   const [tomas, setTomas] = useState<Toma[]>([]);
   const [userRole, setUserRole] = useState<"PATIENT" | "CAREGIVER" | "FAMILY" | null>(null);
 
@@ -48,7 +49,13 @@ export default function TomasScreen() {
 
       const targetPatientId = patientId ?? u.uid;
       unsubTomas = listenUpcomingTomas(String(targetPatientId), (items) => {
-        setTomas(items);
+        if (tomaId) {
+          const selected = items.find((t) => t.id === tomaId);
+          const rest = items.filter((t) => t.id !== tomaId);
+          setTomas(selected ? [selected, ...rest] : items);
+        } else {
+          setTomas(items);
+        }
       });
     });
 
@@ -108,7 +115,16 @@ export default function TomasScreen() {
 
       <PrimaryButton
         title="Volver"
-        onPress={() => router.back()}
+        onPress={() =>
+          router.replace(
+            patientId
+              ? ({
+                  pathname: "/care/patient/[id]",
+                  params: { id: String(patientId) },
+                } as Href)
+              : ("/home" as Href)
+          )
+        }
       />
     </View>
   );

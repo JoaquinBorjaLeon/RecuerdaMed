@@ -11,6 +11,7 @@ import {
   doc,
   getDocs,
   limit,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import type { Toma, Schedule } from "../types";
@@ -18,7 +19,8 @@ import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { getActiveCaregivers } from "./careLinks";
 import { getPushTokensByUserIds } from "./pushTokens";
-import { sendPushToCaregivers } from "./notifications";
+import { sendPushToUsers } from "./notifications";
+import { getUserById } from "./users";
 
 // -------------------- helpers --------------------
 function startOfDay(d: Date) {
@@ -40,6 +42,38 @@ function iso(d: Date) {
 }
 function jsDayToISOdow(jsDay: number) {
   return ((jsDay + 6) % 7) + 1;
+}
+
+const EXPIRY_WARNING_MINUTES = 5;
+
+async function getAllLinkedTokens(patientId: string) {
+  const caregiverIds = await getActiveCaregivers(patientId);
+  const allIds = Array.from(new Set([patientId, ...caregiverIds]));
+  return getPushTokensByUserIds(allIds);
+}
+
+async function getLinkedCaregiverTokens(patientId: string) {
+  const caregiverIds = await getActiveCaregivers(patientId);
+  return getPushTokensByUserIds(caregiverIds);
+}
+
+async function buildTomaMessage(toma: Toma) {
+  let medName = "medicación";
+  try {
+    const medSnap = await getDoc(doc(db, "medications", toma.medId));
+    if (medSnap.exists()) {
+      const data = medSnap.data() as any;
+      if (data?.name) medName = data.name;
+    }
+  } catch {}
+
+  let patientName = "Paciente";
+  try {
+    const user = await getUserById(toma.patientId);
+    if (user?.fullName) patientName = user.fullName;
+  } catch {}
+
+  return { medName, patientName };
 }
 
 // -------------------- Firestore ops --------------------
@@ -94,18 +128,45 @@ export async function confirmToma(tomaId: string, toma: Toma) {
     confirmedAt: new Date().toISOString(),
   });
 
-  const caregiverIds = await getActiveCaregivers(toma.patientId);
-  const tokens = await getPushTokensByUserIds(caregiverIds);
+  const tokens = await getLinkedCaregiverTokens(toma.patientId);
+  const { medName, patientName } = await buildTomaMessage(toma);
+  const confirmedAt = new Date().toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
-  await sendPushToCaregivers(
+  await sendPushToUsers(
     tokens,
     "RecuerdaMed",
-    "El paciente ha confirmado la toma de su medicación"
+    `${patientName} confirmó la toma de ${medName} a las ${confirmedAt}`
   );
+
+  await updateDoc(doc(db, "tomas", tomaId), {
+    confirmedNotifiedAt: new Date().toISOString(),
+  });
 }
 
 export async function updateTomaStatusIfNeeded(toma: Toma) {
   const now = new Date().toISOString();
+
+  // aviso de caducidad cercana
+  if (!toma.warningNotifiedAt && toma.status !== "CONFIRMED") {
+    const warnAt = new Date(new Date(toma.windowEnd).getTime() - EXPIRY_WARNING_MINUTES * 60000);
+    if (new Date(now) >= warnAt && new Date(now) < new Date(toma.windowEnd)) {
+      const tokens = await getAllLinkedTokens(toma.patientId);
+      const { medName, patientName } = await buildTomaMessage(toma);
+      await sendPushToUsers(
+        tokens,
+        "RecuerdaMed",
+        `La toma de ${medName} de ${patientName} caduca en ${EXPIRY_WARNING_MINUTES} min`
+      );
+      await updateDoc(doc(db, "tomas", toma.id), {
+        warningNotifiedAt: new Date().toISOString(),
+      });
+    }
+  }
 
   if (toma.status === "CONFIRMED") return;
 
@@ -119,6 +180,19 @@ export async function updateTomaStatusIfNeeded(toma: Toma) {
 
   if (toma.status !== nextStatus) {
     await updateDoc(doc(db, "tomas", toma.id), { status: nextStatus });
+  }
+
+  if (nextStatus === "EXPIRED" && !toma.expiredNotifiedAt) {
+    const tokens = await getAllLinkedTokens(toma.patientId);
+    const { medName, patientName } = await buildTomaMessage(toma);
+    await sendPushToUsers(
+      tokens,
+      "RecuerdaMed",
+      `${patientName} no confirmó la toma de ${medName} a tiempo`
+    );
+    await updateDoc(doc(db, "tomas", toma.id), {
+      expiredNotifiedAt: new Date().toISOString(),
+    });
   }
 }
 
@@ -164,6 +238,7 @@ export async function generateTomasFromSchedule(
             title: "RecuerdaMed",
             body: "Es hora de tomar tu medicación",
             data: {
+              route: "/tomas",
               tomaPlannedAt: plannedISO,
               scheduleId: schedule.id,
               medId: schedule.medId,
@@ -174,6 +249,50 @@ export async function generateTomasFromSchedule(
             date: plannedAt,
           },
         });
+
+        // Aviso de caducidad cercana
+        const warnAt = new Date(
+          plannedAt.getTime() + tolerance * 60000 - EXPIRY_WARNING_MINUTES * 60000
+        );
+        if (warnAt > new Date()) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "RecuerdaMed",
+              body: `La toma va a caducar en ${EXPIRY_WARNING_MINUTES} minutos`,
+              data: {
+                route: "/tomas",
+                tomaPlannedAt: plannedISO,
+                scheduleId: schedule.id,
+                medId: schedule.medId,
+              },
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: warnAt,
+            },
+          });
+        }
+
+        // Aviso de caducidad
+        const expiredAt = new Date(plannedAt.getTime() + tolerance * 60000);
+        if (expiredAt > new Date()) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "RecuerdaMed",
+              body: "No has confirmado la toma dentro del tiempo",
+              data: {
+                route: "/tomas",
+                tomaPlannedAt: plannedISO,
+                scheduleId: schedule.id,
+                medId: schedule.medId,
+              },
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: expiredAt,
+            },
+          });
+        }
       } catch (e) {
         // En web no está disponible; no bloqueamos la creación
       }

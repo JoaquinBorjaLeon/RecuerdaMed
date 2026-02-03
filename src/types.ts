@@ -49,6 +49,11 @@ export type Toma = {
 
   notificationId?: string | null;
 
+  // notificaciones auxiliares
+  warningNotifiedAt?: string | null;
+  expiredNotifiedAt?: string | null;
+  confirmedNotifiedAt?: string | null;
+
   // ✅ clave anti-duplicados (muy importante)
   dedupeKey: string;
 

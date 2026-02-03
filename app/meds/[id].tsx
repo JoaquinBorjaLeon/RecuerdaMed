@@ -197,7 +197,16 @@ async function handleDelete() {
 
           <PrimaryButton
             title="Volver"
-            onPress={() => router.back()}
+            onPress={() =>
+              router.replace(
+                patientId
+                  ? ({
+                      pathname: "/care/patient/[id]",
+                      params: { id: String(patientId) },
+                    } as Href)
+                  : ("/home" as Href)
+              )
+            }
           />
         </>
       ) : (

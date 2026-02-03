@@ -47,7 +47,7 @@ export async function cancelTomaNotification(notificationId: string) {
   await Notifications.cancelScheduledNotificationAsync(notificationId);
 }
 
-export async function sendPushToCaregivers(
+export async function sendPushToUsers(
   tokens: string[],
   title: string,
   body: string
@@ -69,6 +69,15 @@ export async function sendPushToCaregivers(
       }))
     ),
   });
+}
+
+// compat
+export async function sendPushToCaregivers(
+  tokens: string[],
+  title: string,
+  body: string
+) {
+  return sendPushToUsers(tokens, title, body);
 }
 
 
