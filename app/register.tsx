@@ -18,7 +18,7 @@ import { PrimaryButton } from "../src/components/primaryButton";
 import { Card } from "../src/components/card";
 import { Colors } from "../src/theme/colors";
 
-type Role = "PATIENT" | "CAREGIVER";
+type Role = "PATIENT" | "CAREGIVER" | "FAMILY";
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -125,6 +125,16 @@ export default function RegisterScreen() {
           }
           onPress={() => setRole("CAREGIVER")}
           variant={role === "CAREGIVER" ? "primary" : "danger"}
+        />
+
+        <PrimaryButton
+          title={
+            role === "FAMILY"
+              ? "Familiar ✓"
+              : "Familiar"
+          }
+          onPress={() => setRole("FAMILY")}
+          variant={role === "FAMILY" ? "primary" : "danger"}
         />
 
         {loading ? (

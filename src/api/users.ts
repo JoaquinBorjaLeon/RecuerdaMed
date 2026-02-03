@@ -10,7 +10,7 @@ import { db } from "../lib/firebase";
 /**
  * Roles admitidos en la app
  */
-export type UserRole = "PATIENT" | "CAREGIVER";
+export type UserRole = "PATIENT" | "CAREGIVER" | "FAMILY";
 
 /**
  * Modelo de usuario en Firestore

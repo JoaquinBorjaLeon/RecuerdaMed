@@ -11,8 +11,10 @@ import { canDeleteMedication } from "../../src/api/tomas";
 import { PrimaryButton } from "../../src/components/primaryButton";
 
 export default function MedDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, readonly } = useLocalSearchParams<{ id: string; readonly?: string }>();
   const router = useRouter();
+
+  const isReadOnly = readonly === "1" || readonly === "true";
 
   const [med, setMed] = useState<Medication | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -98,7 +100,11 @@ async function handleDelete() {
                 onPress={() =>
                   router.push({
                     pathname: "/meds/[id]/schedule/[sid]",
-                    params: { id: String(id), sid: item.id },
+                    params: {
+                      id: String(id),
+                      sid: item.id,
+                      ...(isReadOnly ? { readonly: "1" } : {}),
+                    },
                   })
                 }
                 style={{
@@ -117,36 +123,40 @@ async function handleDelete() {
             )}
           />
 
-          <TouchableOpacity
-            onPress={() => router.push(`/meds/${id}/schedule/new`)}
-            style={{
-              backgroundColor: "#16a34a",
-              padding: 14,
-              borderRadius: 10,
-              alignItems: "center",
-            }}
-          >
-            <Text style={{ color: "#fff", fontWeight: "700" }}>
-              Nueva planificación
-            </Text>
-          </TouchableOpacity>
+          {!isReadOnly && (
+            <TouchableOpacity
+              onPress={() => router.push(`/meds/${id}/schedule/new`)}
+              style={{
+                backgroundColor: "#16a34a",
+                padding: 14,
+                borderRadius: 10,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700" }}>
+                Nueva planificación
+              </Text>
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity
-            onPress={handleDelete}
-            disabled={deleting}
-            style={{
-              backgroundColor: deleting ? "#991b1b" : "#dc2626",
-              padding: 14,
-              borderRadius: 10,
-              alignItems: "center",
-              marginTop: 12,
-              opacity: deleting ? 0.7 : 1,
-            }}
-          >
-            <Text style={{ color: "#fff", fontWeight: "700" }}>
-              {deleting ? "Eliminando..." : "Eliminar medicación"}
-            </Text>
-          </TouchableOpacity>
+          {!isReadOnly && (
+            <TouchableOpacity
+              onPress={handleDelete}
+              disabled={deleting}
+              style={{
+                backgroundColor: deleting ? "#991b1b" : "#dc2626",
+                padding: 14,
+                borderRadius: 10,
+                alignItems: "center",
+                marginTop: 12,
+                opacity: deleting ? 0.7 : 1,
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700" }}>
+                {deleting ? "Eliminando..." : "Eliminar medicación"}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <PrimaryButton
             title="Volver"

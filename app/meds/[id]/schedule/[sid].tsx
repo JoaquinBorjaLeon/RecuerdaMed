@@ -37,8 +37,14 @@ function isValidTime(value: string) {
 }
 
 export default function EditSchedule() {
-  const { id, sid } = useLocalSearchParams<{ id: string; sid: string }>();
+  const { id, sid, readonly } = useLocalSearchParams<{
+    id: string;
+    sid: string;
+    readonly?: string;
+  }>();
   const router = useRouter();
+
+  const isReadOnly = readonly === "1" || readonly === "true";
 
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
@@ -242,7 +248,7 @@ export default function EditSchedule() {
         placeholder="DAILY | DOW | EVERY_X_HOURS"
         placeholderTextColor={placeholderColor}
         style={inputStyle}
-        editable={!locked}
+        editable={!locked && !isReadOnly}
       />
 
       {(pattern === "DAILY" || pattern === "DOW") && (
@@ -254,7 +260,7 @@ export default function EditSchedule() {
             placeholder="08:00,20:00"
             placeholderTextColor={placeholderColor}
             style={inputStyle}
-            editable={!locked}
+            editable={!locked && !isReadOnly}
           />
         </>
       )}
@@ -268,7 +274,7 @@ export default function EditSchedule() {
             placeholder="1,2,3,4,5"
             placeholderTextColor={placeholderColor}
             style={inputStyle}
-            editable={!locked}
+            editable={!locked && !isReadOnly}
           />
         </>
       )}
@@ -283,7 +289,7 @@ export default function EditSchedule() {
             placeholder="8"
             placeholderTextColor={placeholderColor}
             style={inputStyle}
-            editable={!locked}
+            editable={!locked && !isReadOnly}
           />
         </>
       )}
@@ -295,7 +301,7 @@ export default function EditSchedule() {
         placeholder="YYYY-MM-DD o DD/MM/YYYY"
         placeholderTextColor={placeholderColor}
         style={inputStyle}
-        editable={!locked}
+        editable={!locked && !isReadOnly}
       />
 
       <Text style={{ color: textColor }}>Fin (opcional)</Text>
@@ -305,7 +311,7 @@ export default function EditSchedule() {
         placeholder="YYYY-MM-DD o DD/MM/YYYY"
         placeholderTextColor={placeholderColor}
         style={inputStyle}
-        editable={!locked}
+        editable={!locked && !isReadOnly}
       />
 
       <Text style={{ color: textColor }}>Tolerancia ± minutos</Text>
@@ -316,10 +322,10 @@ export default function EditSchedule() {
         placeholder="30"
         placeholderTextColor={placeholderColor}
         style={inputStyle}
-        editable={!locked}
+        editable={!locked && !isReadOnly}
       />
 
-      {!locked && (
+      {!locked && !isReadOnly && (
         <>
           <Button title="Guardar cambios" onPress={save} />
           <Button title="Eliminar planificación" color="#dc2626" onPress={handleDelete} />

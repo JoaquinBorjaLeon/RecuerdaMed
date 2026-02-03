@@ -124,6 +124,33 @@ export default function Home() {
   }
 
   /* =========================
+     👪 HOME FAMILIAR
+     ========================= */
+  if (user.role === "FAMILY") {
+    return (
+      <View style={[styles.container, { backgroundColor: Colors.background }]}>
+        <Text style={styles.title}>Panel familiar</Text>
+
+        <PrimaryButton
+          title="Mis familiares"
+          onPress={() => router.push("/family/patients")}
+        />
+
+        <PrimaryButton
+          title="Mis invitaciones"
+          onPress={() => router.push("/family/invites")}
+        />
+
+        <PrimaryButton
+          title="Cerrar sesión"
+          variant="danger"
+          onPress={handleLogout}
+        />
+      </View>
+    );
+  }
+
+  /* =========================
      👤 HOME PACIENTE
      ========================= */
   return (
@@ -170,10 +197,20 @@ export default function Home() {
         onPress={() => router.push("/care/invite")}
       />
 
+      <PrimaryButton
+        title="Invitar familiar"
+        onPress={() => router.push("/family/invite")}
+      />
+
       {/* ✅ NUEVO: solo paciente */}
       <PrimaryButton
         title="Gestionar cuidadores"
         onPress={() => router.push("/care/patient/caregivers")}
+      />
+
+      <PrimaryButton
+        title="Gestionar familiares"
+        onPress={() => router.push("/family/patient/families")}
       />
 
       <PrimaryButton
