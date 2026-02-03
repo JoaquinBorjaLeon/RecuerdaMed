@@ -258,7 +258,18 @@ export default function NewSchedule() {
       />
 
       <Button title="Guardar" onPress={save} />
-      <Button title="Cancelar" onPress={() => router.back()} />
+      <Button
+        title="Cancelar"
+        onPress={() =>
+          router.replace({
+            pathname: "/meds/[id]",
+            params: {
+              id: String(id),
+              ...(patientId ? { patientId } : {}),
+            },
+          })
+        }
+      />
     </View>
   );
 }

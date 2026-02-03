@@ -104,7 +104,18 @@ export default function NewMedication() {
       />
 
       <PrimaryButton title="Guardar" onPress={save} />
-      <PrimaryButton title="Cancelar" variant="danger" onPress={() => router.back()} />
+      <PrimaryButton
+        title="Cancelar"
+        variant="danger"
+        onPress={() =>
+          params.patientId
+            ? router.replace({
+                pathname: "/care/patient/[id]",
+                params: { id: params.patientId },
+              })
+            : router.replace("/home")
+        }
+      />
     </View>
   );
 }

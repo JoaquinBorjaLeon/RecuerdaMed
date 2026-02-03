@@ -129,7 +129,7 @@ export default function ManageCareRelations() {
         )}
       />
 
-      <PrimaryButton title="Volver" onPress={() => router.back()} />
+      <PrimaryButton title="Volver" onPress={() => router.replace("/home")} />
     </View>
   );
 }

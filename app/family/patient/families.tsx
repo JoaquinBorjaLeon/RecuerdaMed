@@ -101,7 +101,7 @@ export default function ManageFamilies() {
         )}
       />
 
-      <PrimaryButton title="Volver" onPress={() => router.back()} />
+      <PrimaryButton title="Volver" onPress={() => router.replace("/home")} />
     </View>
   );
 }

@@ -41,7 +41,7 @@ export default function InviteCaregiverScreen() {
           ? "El cuidador podrá aceptarla desde su cuenta"
           : "El familiar podrá aceptarla desde su cuenta"
       );
-      router.back();
+      router.replace("/home");
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "No se pudo enviar la invitación");
     }
@@ -63,7 +63,7 @@ export default function InviteCaregiverScreen() {
       />
 
       <PrimaryButton title="Enviar invitación" onPress={handleInvite} />
-      <PrimaryButton title="Cancelar" variant="danger" onPress={() => router.back()} />
+      <PrimaryButton title="Cancelar" variant="danger" onPress={() => router.replace("/home")} />
     </View>
   );
 }

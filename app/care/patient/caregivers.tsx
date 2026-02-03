@@ -100,7 +100,7 @@ export default function ManageCaregivers() {
 
       <PrimaryButton
         title="Volver"
-        onPress={() => router.back()}
+        onPress={() => router.replace("/home")}
       />
     </View>
   );

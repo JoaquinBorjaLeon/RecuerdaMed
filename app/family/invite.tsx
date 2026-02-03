@@ -26,7 +26,7 @@ export default function InviteFamilyScreen() {
         "Invitación enviada",
         "El familiar podrá aceptarla desde su cuenta"
       );
-      router.back();
+      router.replace("/home");
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "No se pudo enviar la invitación");
     }
@@ -51,7 +51,7 @@ export default function InviteFamilyScreen() {
       <PrimaryButton
         title="Cancelar"
         variant="danger"
-        onPress={() => router.back()}
+        onPress={() => router.replace("/home")}
       />
     </View>
   );

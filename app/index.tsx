@@ -25,6 +25,9 @@ export default function Login() {
 
   // Si hay sesión, comprobar si tiene perfil
   useEffect(() => {
+    setEmail("");
+    setPass("");
+
     const unsub = onAuthStateChanged(auth, async (u) => {
       if (!u) return;
 
@@ -84,16 +87,28 @@ export default function Login() {
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
+        autoComplete="off"
+        textContentType="none"
+        importantForAutofill="no"
+        autoCorrect={false}
+        spellCheck={false}
         value={email}
         onChangeText={setEmail}
+        onFocus={() => setEmail("")}
         style={{ borderWidth: 1, padding: 12, borderRadius: 10 }}
       />
 
       <TextInput
         placeholder="Contraseña"
         secureTextEntry
+        autoComplete="off"
+        textContentType="none"
+        importantForAutofill="no"
+        autoCorrect={false}
+        spellCheck={false}
         value={pass}
         onChangeText={setPass}
+        onFocus={() => setPass("")}
         style={{ borderWidth: 1, padding: 12, borderRadius: 10 }}
       />
 

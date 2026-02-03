@@ -7,6 +7,8 @@ import {
   Alert,
   StyleSheet,
   ActivityIndicator,
+  Pressable,
+  ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -77,12 +79,16 @@ export default function RegisterScreen() {
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <Text style={styles.title}>Crear cuenta</Text>
 
-      <Card>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Card>
         <Text style={styles.label}>Nombre completo</Text>
         <TextInput
           value={fullName}
           onChangeText={setFullName}
           placeholder="Ej. María López"
+          autoComplete="off"
+          textContentType="none"
+          importantForAutofill="no"
           style={styles.input}
         />
 
@@ -90,9 +96,15 @@ export default function RegisterScreen() {
         <TextInput
           value={email}
           onChangeText={setEmail}
+          onFocus={() => setEmail("")}
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="email@ejemplo.com"
+          autoComplete="off"
+          textContentType="none"
+          importantForAutofill="no"
+          autoCorrect={false}
+          spellCheck={false}
           style={styles.input}
         />
 
@@ -100,42 +112,96 @@ export default function RegisterScreen() {
         <TextInput
           value={pass}
           onChangeText={setPass}
+          onFocus={() => setPass("")}
           secureTextEntry
           placeholder="Mínimo 6 caracteres"
+          autoComplete="new-password"
+          textContentType="none"
+          importantForAutofill="no"
+          autoCorrect={false}
+          spellCheck={false}
           style={styles.input}
         />
 
         <Text style={styles.label}>Tipo de cuenta</Text>
+        <Text style={styles.help}>Elige el perfil que usarás</Text>
 
-        <PrimaryButton
-          title={
-            role === "PATIENT"
-              ? "Paciente ✓"
-              : "Paciente"
-          }
-          onPress={() => setRole("PATIENT")}
-          variant={role === "PATIENT" ? "primary" : "danger"}
-        />
+        <View style={styles.roleGrid}>
+          <Pressable
+            onPress={() => setRole("PATIENT")}
+            style={[
+              styles.roleCard,
+              role === "PATIENT" && styles.roleCardSelected,
+            ]}
+          >
+            <Text
+              style={[
+                styles.roleTitle,
+                role === "PATIENT" && styles.roleTitleSelected,
+              ]}
+            >
+              Paciente
+            </Text>
+            <Text
+              style={[
+                styles.roleDesc,
+                role === "PATIENT" && styles.roleDescSelected,
+              ]}
+            >
+              Gestiona tu medicación
+            </Text>
+          </Pressable>
 
-        <PrimaryButton
-          title={
-            role === "CAREGIVER"
-              ? "Cuidador ✓"
-              : "Cuidador"
-          }
-          onPress={() => setRole("CAREGIVER")}
-          variant={role === "CAREGIVER" ? "primary" : "danger"}
-        />
+          <Pressable
+            onPress={() => setRole("CAREGIVER")}
+            style={[
+              styles.roleCard,
+              role === "CAREGIVER" && styles.roleCardSelected,
+            ]}
+          >
+            <Text
+              style={[
+                styles.roleTitle,
+                role === "CAREGIVER" && styles.roleTitleSelected,
+              ]}
+            >
+              Cuidador
+            </Text>
+            <Text
+              style={[
+                styles.roleDesc,
+                role === "CAREGIVER" && styles.roleDescSelected,
+              ]}
+            >
+              Ayuda a pacientes
+            </Text>
+          </Pressable>
 
-        <PrimaryButton
-          title={
-            role === "FAMILY"
-              ? "Familiar ✓"
-              : "Familiar"
-          }
-          onPress={() => setRole("FAMILY")}
-          variant={role === "FAMILY" ? "primary" : "danger"}
-        />
+          <Pressable
+            onPress={() => setRole("FAMILY")}
+            style={[
+              styles.roleCard,
+              role === "FAMILY" && styles.roleCardSelected,
+            ]}
+          >
+            <Text
+              style={[
+                styles.roleTitle,
+                role === "FAMILY" && styles.roleTitleSelected,
+              ]}
+            >
+              Familiar
+            </Text>
+            <Text
+              style={[
+                styles.roleDesc,
+                role === "FAMILY" && styles.roleDescSelected,
+              ]}
+            >
+              Solo lectura y avisos
+            </Text>
+          </Pressable>
+        </View>
 
         {loading ? (
           <ActivityIndicator style={{ marginTop: 12 }} />
@@ -146,12 +212,13 @@ export default function RegisterScreen() {
           />
         )}
 
-        <PrimaryButton
-          title="Volver"
-          variant="danger"
-          onPress={() => router.back()}
-        />
-      </Card>
+          <PrimaryButton
+            title="Volver"
+            variant="danger"
+            onPress={() => router.replace("/")}
+          />
+        </Card>
+      </ScrollView>
     </View>
   );
 }
@@ -160,6 +227,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   title: {
     fontSize: 24,
@@ -173,11 +243,44 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 4,
   },
+  help: {
+    color: Colors.muted,
+    marginBottom: 8,
+  },
   input: {
     borderWidth: 1,
     borderColor: Colors.muted,
     borderRadius: 10,
     padding: 12,
     color: Colors.text,
+  },
+  roleGrid: {
+    gap: 10,
+  },
+  roleCard: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
+    padding: 14,
+    borderRadius: 12,
+  },
+  roleCardSelected: {
+    borderColor: Colors.primary,
+    backgroundColor: "#DBEAFE",
+  },
+  roleTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: Colors.text,
+  },
+  roleTitleSelected: {
+    color: Colors.primary,
+  },
+  roleDesc: {
+    color: Colors.muted,
+    marginTop: 4,
+  },
+  roleDescSelected: {
+    color: Colors.primary,
   },
 });
