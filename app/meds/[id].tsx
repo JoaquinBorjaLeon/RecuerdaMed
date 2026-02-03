@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, TouchableOpacity, Alert, Platform } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import type { Href } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 
 import { db } from "../../src/lib/firebase";
@@ -11,7 +12,11 @@ import { canDeleteMedication } from "../../src/api/tomas";
 import { PrimaryButton } from "../../src/components/primaryButton";
 
 export default function MedDetail() {
-  const { id, readonly } = useLocalSearchParams<{ id: string; readonly?: string }>();
+  const { id, readonly, patientId } = useLocalSearchParams<{
+    id: string;
+    readonly?: string;
+    patientId?: string;
+  }>();
   const router = useRouter();
 
   const isReadOnly = readonly === "1" || readonly === "true";
@@ -54,8 +59,15 @@ async function handleDelete() {
   if (!med || deleting) return;
   setDeleting(true);
 
+  const targetAfterDelete: Href = patientId
+    ? ({
+        pathname: "/care/patient/[id]",
+        params: { id: String(patientId) },
+      } as Href)
+    : ("/home" as Href);
+
   try {
-    const ok = await canDeleteMedication(med.id);
+    const ok = await canDeleteMedication(med.id, med.patientId);
     if (!ok) {
       const msg = "No puedes eliminar: hay tomas futuras.";
       if (Platform.OS === "web") window.alert(msg);
@@ -65,9 +77,17 @@ async function handleDelete() {
     }
 
     await deleteMedication(med.id);
-    if (Platform.OS === "web") window.alert("Medicación eliminada");
-    else Alert.alert("OK", "Medicación eliminada");
-    router.back();
+    if (Platform.OS === "web") {
+      window.alert("Medicación eliminada");
+      router.replace(targetAfterDelete);
+    } else {
+      Alert.alert("OK", "Medicación eliminada", [
+        {
+          text: "Aceptar",
+          onPress: () => router.replace(targetAfterDelete),
+        },
+      ]);
+    }
   } catch (e: any) {
     const msg = e?.code ?? e?.message ?? "No se pudo eliminar";
     if (Platform.OS === "web") window.alert(msg);
@@ -125,7 +145,15 @@ async function handleDelete() {
 
           {!isReadOnly && (
             <TouchableOpacity
-              onPress={() => router.push(`/meds/${id}/schedule/new`)}
+              onPress={() =>
+                router.push({
+                  pathname: "/meds/[id]/schedule/new",
+                  params: {
+                    id,
+                    ...(patientId ? { patientId } : {}),
+                  },
+                })
+              }
               style={{
                 backgroundColor: "#16a34a",
                 padding: 14,

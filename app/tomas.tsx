@@ -4,6 +4,7 @@ import { View, Text, FlatList, Alert, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../src/lib/firebase";
+import { getUserById } from "../src/api/users";
 
 import type { Toma } from "../src/types";
 import { listenUpcomingTomas, confirmToma } from "../src/api/tomas";
@@ -26,15 +27,19 @@ export default function TomasScreen() {
   const router = useRouter();
   const { patientId } = useLocalSearchParams<{ patientId?: string }>();
   const [tomas, setTomas] = useState<Toma[]>([]);
+  const [userRole, setUserRole] = useState<"PATIENT" | "CAREGIVER" | "FAMILY" | null>(null);
 
   useEffect(() => {
     let unsubTomas: null | (() => void) = null;
 
-    const unsubAuth = onAuthStateChanged(auth, (u) => {
+    const unsubAuth = onAuthStateChanged(auth, async (u) => {
       if (!u) {
         router.replace("/");
         return;
       }
+
+      const profile = await getUserById(u.uid);
+      setUserRole(profile?.role ?? null);
 
       if (unsubTomas) {
         unsubTomas();
@@ -54,6 +59,7 @@ export default function TomasScreen() {
   }, [router, patientId]);
 
   async function handleConfirm(toma: Toma) {
+    if (patientId && userRole !== "CAREGIVER") return;
     try {
       await confirmToma(toma.id, toma);
       // refresco automático por onSnapshot
@@ -76,6 +82,7 @@ export default function TomasScreen() {
         }
         renderItem={({ item }) => {
           const canConfirm = item.status === "DUE" || item.status === "PLANNED";
+          const canShowConfirm = !patientId || userRole === "CAREGIVER";
 
           return (
             <Card>
@@ -87,7 +94,7 @@ export default function TomasScreen() {
                 Ventana: {fmt(item.windowStart)} — {fmt(item.windowEnd)}
               </Text>
 
-              {!patientId && (
+              {canShowConfirm && (
                 <PrimaryButton
                   title="Confirmar toma"
                   onPress={() => handleConfirm(item)}

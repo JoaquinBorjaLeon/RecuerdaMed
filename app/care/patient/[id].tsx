@@ -121,7 +121,7 @@ export default function PatientDetailScreen() {
             onPress={() =>
               router.push({
                 pathname: "/meds/[id]",
-                params: { id: item.id },
+                params: { id: item.id, patientId },
               })
             }
           >

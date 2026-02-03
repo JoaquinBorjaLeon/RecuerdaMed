@@ -234,7 +234,8 @@ export async function generateTomasFromSchedule(
 }
 
 export async function canDeleteMedication(
-  medicationId: string
+  medicationId: string,
+  patientId?: string
 ): Promise<boolean> {
   // Bloqueamos borrado si existe *cualquier* toma futura del medicamento,
   // independientemente del status (PLANNED o DUE principalmente).
@@ -242,10 +243,13 @@ export async function canDeleteMedication(
   const nowIso = new Date().toISOString();
 
   try {
-    const q = query(
-      collection(db, "tomas"),
+    const base = [
       where("medId", "==", medicationId),
       where("plannedAt", ">", nowIso),
+    ];
+    const q = query(
+      collection(db, "tomas"),
+      ...(patientId ? [where("patientId", "==", patientId), ...base] : base),
       limit(1)
     );
 
