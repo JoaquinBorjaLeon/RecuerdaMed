@@ -193,24 +193,13 @@ export default function Home() {
       />
 
       <PrimaryButton
-        title="Invitar cuidador"
+        title="Invitar cuidador o familiar"
         onPress={() => router.push("/care/invite")}
       />
 
       <PrimaryButton
-        title="Invitar familiar"
-        onPress={() => router.push("/family/invite")}
-      />
-
-      {/* ✅ NUEVO: solo paciente */}
-      <PrimaryButton
-        title="Gestionar cuidadores"
-        onPress={() => router.push("/care/patient/caregivers")}
-      />
-
-      <PrimaryButton
-        title="Gestionar familiares"
-        onPress={() => router.push("/family/patient/families")}
+        title="Gestionar cuidadores y familiares"
+        onPress={() => router.push("/care/patient/manage")}
       />
 
       <PrimaryButton

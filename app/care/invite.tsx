@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { View, Text, TextInput, Alert, StyleSheet } from "react-native";
+import { View, Text, TextInput, Alert, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { auth } from "../../src/lib/firebase";
 import { inviteCaregiver } from "../../src/api/careLinks";
+import { getUserByEmail } from "../../src/api/users";
 
 import { PrimaryButton } from "../../src/components/primaryButton";
 import { Colors } from "../../src/theme/colors";
@@ -21,8 +22,25 @@ export default function InviteCaregiverScreen() {
     }
 
     try {
+      const target = await getUserByEmail(email.trim());
+      if (!target) {
+        const msg = "No existe una cuenta con ese email";
+        if (Platform.OS === "web") window.alert(msg);
+        else Alert.alert("No encontrado", msg);
+        return;
+      }
+      if (target.role === "PATIENT") {
+        Alert.alert("No válido", "Solo puedes invitar a cuidadores o familiares");
+        return;
+      }
+
       await inviteCaregiver(user.uid, email.trim());
-      Alert.alert("Invitación enviada", "El cuidador podrá aceptarla desde su cuenta");
+      Alert.alert(
+        "Invitación enviada",
+        target.role === "CAREGIVER"
+          ? "El cuidador podrá aceptarla desde su cuenta"
+          : "El familiar podrá aceptarla desde su cuenta"
+      );
       router.back();
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "No se pudo enviar la invitación");
@@ -31,9 +49,9 @@ export default function InviteCaregiverScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <Text style={styles.title}>Invitar cuidador</Text>
+      <Text style={styles.title}>Invitar cuidador o familiar</Text>
 
-      <Text style={styles.label}>Email del cuidador</Text>
+      <Text style={styles.label}>Email</Text>
       <TextInput
         placeholder="correo@ejemplo.com"
         placeholderTextColor={Colors.muted}

@@ -4,6 +4,10 @@ import {
   setDoc,
   getDoc,
   serverTimestamp,
+  getDocs,
+  collection,
+  query,
+  where,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
@@ -64,5 +68,28 @@ export async function getUserById(
   return {
     id: snap.id,
     ...(snap.data() as Omit<UserProfile, "id">),
+  };
+}
+
+/**
+ * Obtiene un usuario por email
+ */
+export async function getUserByEmail(
+  email: string
+): Promise<UserProfile | null> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return null;
+
+  const q = query(
+    collection(db, "users"),
+    where("email", "==", normalized)
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+
+  const docSnap = snap.docs[0];
+  return {
+    id: docSnap.id,
+    ...(docSnap.data() as Omit<UserProfile, "id">),
   };
 }
