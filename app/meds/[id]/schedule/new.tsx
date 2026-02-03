@@ -31,7 +31,12 @@ export default function NewSchedule() {
   const [times, setTimes] = useState<string>("08:00,20:00");
   const [dow, setDow] = useState<string>("1,2,3,4,5");
   const [every, setEvery] = useState<string>("8");
-  const [startDate, setStartDate] = useState<string>("2025-10-22");
+  const [startDate, setStartDate] = useState<string>(() => {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  });
   const [endDate, setEndDate] = useState<string>("");
   const [tol, setTol] = useState<string>("30");
 
@@ -152,18 +157,14 @@ export default function NewSchedule() {
     try {
       await createSchedule(base);
 
-      // Navegación directa (más fiable en web)
-      if (patientId) {
-        router.replace({
-          pathname: "/care/patient/[id]",
-          params: { id: patientId },
-        });
-      } else {
-        router.replace({
-          pathname: "/meds/[id]",
-          params: { id: String(id) },
-        });
-      }
+      // Volver a la medicación para ver planificaciones
+      router.replace({
+        pathname: "/meds/[id]",
+        params: {
+          id: String(id),
+          ...(patientId ? { patientId } : {}),
+        },
+      });
     } catch (e: any) {
       if (Platform.OS === "web") {
         window.alert(e?.message ?? "No se pudo guardar");

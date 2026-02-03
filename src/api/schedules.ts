@@ -37,10 +37,16 @@ export async function createSchedule(
   return ref.id;
 }
 
-export async function listSchedulesByMed(medId: string) {
+export async function listSchedulesByMed(
+  medId: string,
+  patientId?: string
+) {
+  const filters = [where("medId", "==", medId)];
+  if (patientId) filters.push(where("patientId", "==", patientId));
+
   const q = query(
     collection(db, "schedules"),
-    where("medId", "==", medId),
+    ...filters,
     orderBy("createdAt", "desc")
   );
   const snap = await getDocs(q);
@@ -52,11 +58,15 @@ export async function listSchedulesByMed(medId: string) {
 // Listener en tiempo real
 export function listenSchedulesByMed(
   medId: string,
-  cb: (items: Schedule[]) => void
+  cb: (items: Schedule[]) => void,
+  patientId?: string
 ) {
+  const filters = [where("medId", "==", medId)];
+  if (patientId) filters.push(where("patientId", "==", patientId));
+
   const q = query(
     collection(db, "schedules"),
-    where("medId", "==", medId),
+    ...filters,
     orderBy("createdAt", "desc")
   );
 
@@ -70,12 +80,14 @@ export function listenSchedulesByMed(
 }
 
 // Eliminar planificación y sus tomas asociadas
-export async function deleteScheduleAndTomas(scheduleId: string) {
+export async function deleteScheduleAndTomas(
+  scheduleId: string,
+  patientId?: string
+) {
   // 1) borrar tomas vinculadas
-  const q = query(
-    collection(db, "tomas"),
-    where("scheduleId", "==", scheduleId)
-  );
+  const filters = [where("scheduleId", "==", scheduleId)];
+  if (patientId) filters.push(where("patientId", "==", patientId));
+  const q = query(collection(db, "tomas"), ...filters);
   const snap = await getDocs(q);
   for (const d of snap.docs) {
     await deleteDoc(doc(db, "tomas", d.id));

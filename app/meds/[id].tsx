@@ -19,11 +19,12 @@ export default function MedDetail() {
   }>();
   const router = useRouter();
 
-  const isReadOnly = readonly === "1" || readonly === "true";
-
   const [med, setMed] = useState<Medication | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [deleting, setDeleting] = useState(false);
+
+  const isReadOnly = readonly === "1" || readonly === "true";
+  const effectivePatientId = patientId ?? med?.patientId;
 
   useEffect(() => {
     if (!id) return;
@@ -38,10 +39,17 @@ export default function MedDetail() {
         console.warn("getDoc medication error:", e?.code, e?.message, e);
       }
     })();
-
-    const unsub = listenSchedulesByMed(String(id), setSchedules);
-    return () => unsub();
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const schedulePatientId = patientId ?? med?.patientId;
+    if (!schedulePatientId) return;
+
+    const unsub = listenSchedulesByMed(String(id), setSchedules, schedulePatientId);
+    return () => unsub();
+  }, [id, patientId, med?.patientId]);
 
   function renderSchedule(s: Schedule) {
     if (s.pattern === "DAILY") return `Diaria a ${s.times?.join(", ")}`;
@@ -124,6 +132,7 @@ async function handleDelete() {
                       id: String(id),
                       sid: item.id,
                       ...(isReadOnly ? { readonly: "1" } : {}),
+                      ...(effectivePatientId ? { patientId: effectivePatientId } : {}),
                     },
                   })
                 }
@@ -150,7 +159,7 @@ async function handleDelete() {
                   pathname: "/meds/[id]/schedule/new",
                   params: {
                     id,
-                    ...(patientId ? { patientId } : {}),
+                    ...(effectivePatientId ? { patientId: effectivePatientId } : {}),
                   },
                 })
               }

@@ -37,10 +37,11 @@ function isValidTime(value: string) {
 }
 
 export default function EditSchedule() {
-  const { id, sid, readonly } = useLocalSearchParams<{
+  const { id, sid, readonly, patientId } = useLocalSearchParams<{
     id: string;
     sid: string;
     readonly?: string;
+    patientId?: string;
   }>();
   const router = useRouter();
 
@@ -215,13 +216,31 @@ export default function EditSchedule() {
     if (!confirmed) return;
 
     try {
-      await deleteScheduleAndTomas(String(sid));
+      await deleteScheduleAndTomas(String(sid), patientId);
       if (Platform.OS === "web") {
         window.alert("Planificación eliminada");
+        router.replace({
+          pathname: "/meds/[id]",
+          params: {
+            id: String(id),
+            ...(patientId ? { patientId } : {}),
+          },
+        });
       } else {
-        Alert.alert("OK", "Planificación eliminada");
+        Alert.alert("OK", "Planificación eliminada", [
+          {
+            text: "Aceptar",
+            onPress: () =>
+              router.replace({
+                pathname: "/meds/[id]",
+                params: {
+                  id: String(id),
+                  ...(patientId ? { patientId } : {}),
+                },
+              }),
+          },
+        ]);
       }
-      router.back();
     } catch (e: any) {
       const msg = e?.message ?? "No se pudo eliminar";
       if (Platform.OS === "web") window.alert(msg);
