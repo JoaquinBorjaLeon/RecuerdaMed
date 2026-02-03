@@ -102,23 +102,27 @@ export default function Home() {
   if (user.role === "CAREGIVER") {
     return (
       <View style={[styles.container, { backgroundColor: Colors.background }]}>
-        <Text style={styles.title}>Panel del cuidador</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Panel del cuidador</Text>
+          <Text style={styles.subtitle}>Gestiona a tus pacientes</Text>
+        </View>
 
-        <PrimaryButton
-          title="Mis pacientes"
-          onPress={() => router.push("/care/patients")}
-        />
-
-        <PrimaryButton
-          title="Mis invitaciones"
-          onPress={() => router.push("/care/invites")}
-        />
-
-        <PrimaryButton
-          title="Cerrar sesión"
-          variant="danger"
-          onPress={handleLogout}
-        />
+        <Card>
+          <Text style={styles.sectionTitle}>Acciones</Text>
+          <PrimaryButton
+            title="Mis pacientes"
+            onPress={() => router.push("/care/patients")}
+          />
+          <PrimaryButton
+            title="Mis invitaciones"
+            onPress={() => router.push("/care/invites")}
+          />
+          <PrimaryButton
+            title="Cerrar sesión"
+            variant="danger"
+            onPress={handleLogout}
+          />
+        </Card>
       </View>
     );
   }
@@ -129,23 +133,27 @@ export default function Home() {
   if (user.role === "FAMILY") {
     return (
       <View style={[styles.container, { backgroundColor: Colors.background }]}>
-        <Text style={styles.title}>Panel familiar</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Panel familiar</Text>
+          <Text style={styles.subtitle}>Consulta y seguimiento</Text>
+        </View>
 
-        <PrimaryButton
-          title="Mis familiares"
-          onPress={() => router.push("/family/patients")}
-        />
-
-        <PrimaryButton
-          title="Mis invitaciones"
-          onPress={() => router.push("/family/invites")}
-        />
-
-        <PrimaryButton
-          title="Cerrar sesión"
-          variant="danger"
-          onPress={handleLogout}
-        />
+        <Card>
+          <Text style={styles.sectionTitle}>Acciones</Text>
+          <PrimaryButton
+            title="Mis familiares"
+            onPress={() => router.push("/family/patients")}
+          />
+          <PrimaryButton
+            title="Mis invitaciones"
+            onPress={() => router.push("/family/invites")}
+          />
+          <PrimaryButton
+            title="Cerrar sesión"
+            variant="danger"
+            onPress={handleLogout}
+          />
+        </Card>
       </View>
     );
   }
@@ -155,15 +163,24 @@ export default function Home() {
      ========================= */
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <Text style={styles.title}>Mis medicaciones</Text>
-
       <FlatList
         data={meds}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={
+          <>
+            <View style={styles.header}>
+              <Text style={styles.title}>Mis medicaciones</Text>
+              <Text style={styles.subtitle}>
+                Controla tus dosis y horarios
+              </Text>
+            </View>
+
+            <Text style={styles.sectionTitle}>Listado</Text>
+          </>
+        }
         ListEmptyComponent={
-          <Text style={{ color: Colors.muted }}>
-            No tienes medicaciones aún.
-          </Text>
+          <Text style={styles.emptyText}>No tienes medicaciones aún.</Text>
         }
         renderItem={({ item }) => (
           <Card
@@ -180,32 +197,35 @@ export default function Home() {
             )}
           </Card>
         )}
-      />
+        ListFooterComponent={
+          <>
+            <Card>
+              <Text style={styles.sectionTitle}>Acciones rápidas</Text>
+              <PrimaryButton
+                title="Añadir medicación"
+                onPress={() => router.push("/meds/new")}
+              />
+              <PrimaryButton
+                title="Ver tomas"
+                onPress={() => router.push("/tomas")}
+              />
+              <PrimaryButton
+                title="Invitar cuidador o familiar"
+                onPress={() => router.push("/care/invite")}
+              />
+              <PrimaryButton
+                title="Gestionar cuidadores y familiares"
+                onPress={() => router.push("/care/patient/manage")}
+              />
+            </Card>
 
-      <PrimaryButton
-        title="Añadir medicación"
-        onPress={() => router.push("/meds/new")}
-      />
-
-      <PrimaryButton
-        title="Ver tomas"
-        onPress={() => router.push("/tomas")}
-      />
-
-      <PrimaryButton
-        title="Invitar cuidador o familiar"
-        onPress={() => router.push("/care/invite")}
-      />
-
-      <PrimaryButton
-        title="Gestionar cuidadores y familiares"
-        onPress={() => router.push("/care/patient/manage")}
-      />
-
-      <PrimaryButton
-        title="Cerrar sesión"
-        variant="danger"
-        onPress={handleLogout}
+            <PrimaryButton
+              title="Cerrar sesión"
+              variant="danger"
+              onPress={handleLogout}
+            />
+          </>
+        }
       />
     </View>
   );
@@ -216,10 +236,29 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  header: {
+    marginBottom: 12,
+  },
   title: {
-    fontSize: 22,
+    fontSize: 24,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  subtitle: {
+    color: Colors.muted,
+    marginTop: 6,
+  },
+  sectionTitle: {
+    fontSize: 16,
     fontWeight: "700",
     color: Colors.text,
+    marginBottom: 8,
+  },
+  listContent: {
+    paddingBottom: 24,
+  },
+  emptyText: {
+    color: Colors.muted,
     marginBottom: 12,
   },
   cardTitle: {

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -77,7 +78,14 @@ export default function RegisterScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <Text style={styles.title}>Crear cuenta</Text>
+      <View style={styles.header}>
+        <Image
+          source={require("../assets/images/logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.title}>Crear cuenta</Text>
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Card>
@@ -236,6 +244,15 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: Colors.text,
     marginBottom: 16,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  logo: {
+    width: 96,
+    height: 96,
+    marginBottom: 8,
   },
   label: {
     fontWeight: "600",

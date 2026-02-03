@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, TouchableOpacity, Alert, Platform } from "react-native";
+import { View, Text, FlatList, Alert, Platform, StyleSheet } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Href } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
@@ -10,6 +10,8 @@ import { listenSchedulesByMed } from "../../src/api/schedules";
 import { deleteMedication } from "../../src/api/meds";
 import { canDeleteMedication } from "../../src/api/tomas";
 import { PrimaryButton } from "../../src/components/primaryButton";
+import { Card } from "../../src/components/card";
+import { Colors } from "../../src/theme/colors";
 
 export default function MedDetail() {
   const { id, readonly, patientId } = useLocalSearchParams<{
@@ -24,7 +26,7 @@ export default function MedDetail() {
   const [deleting, setDeleting] = useState(false);
 
   const isReadOnly = readonly === "1" || readonly === "true";
-  const effectivePatientId = patientId ?? med?.patientId;
+  const effectivePatientId = patientId;
 
   useEffect(() => {
     if (!id) return;
@@ -107,24 +109,26 @@ async function handleDelete() {
 
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12 }}>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
       {med ? (
         <>
-          <Text style={{ fontSize: 22, fontWeight: "700" }}>{med.name}</Text>
-          {!!med.strength && <Text>{med.strength}</Text>}
-          {!!med.form && <Text>{med.form}</Text>}
-          {!!med.notes && <Text style={{ opacity: 0.7 }}>{med.notes}</Text>}
+          <Card>
+            <Text style={styles.title}>{med.name}</Text>
+            {!!med.strength && <Text style={styles.meta}>{med.strength}</Text>}
+            {!!med.form && <Text style={styles.meta}>{med.form}</Text>}
+            {!!med.notes && <Text style={styles.notes}>{med.notes}</Text>}
+          </Card>
 
-          <Text style={{ marginTop: 16, fontSize: 18, fontWeight: "700" }}>
-            Planificaciones
-          </Text>
+          <Text style={styles.sectionTitle}>Planificaciones</Text>
 
           <FlatList
             data={schedules}
             keyExtractor={(i) => i.id}
-            ListEmptyComponent={<Text>No hay planificaciones aún.</Text>}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>No hay planificaciones aún.</Text>
+            }
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <Card
                 onPress={() =>
                   router.push({
                     pathname: "/meds/[id]/schedule/[sid]",
@@ -136,24 +140,19 @@ async function handleDelete() {
                     },
                   })
                 }
-                style={{
-                  padding: 12,
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  marginBottom: 8,
-                }}
               >
-                <Text>{renderSchedule(item)}</Text>
-                <Text style={{ opacity: 0.7, marginTop: 4 }}>
+                <Text style={styles.scheduleTitle}>{renderSchedule(item)}</Text>
+                <Text style={styles.scheduleMeta}>
                   Inicio: {item.startDate}
                   {item.endDate ? ` · Fin: ${item.endDate}` : ""}
                 </Text>
-              </TouchableOpacity>
+              </Card>
             )}
           />
 
           {!isReadOnly && (
-            <TouchableOpacity
+            <PrimaryButton
+              title="Nueva planificación"
               onPress={() =>
                 router.push({
                   pathname: "/meds/[id]/schedule/new",
@@ -163,36 +162,15 @@ async function handleDelete() {
                   },
                 })
               }
-              style={{
-                backgroundColor: "#16a34a",
-                padding: 14,
-                borderRadius: 10,
-                alignItems: "center",
-              }}
-            >
-              <Text style={{ color: "#fff", fontWeight: "700" }}>
-                Nueva planificación
-              </Text>
-            </TouchableOpacity>
+            />
           )}
 
           {!isReadOnly && (
-            <TouchableOpacity
+            <PrimaryButton
+              title={deleting ? "Eliminando..." : "Eliminar medicación"}
+              variant="danger"
               onPress={handleDelete}
-              disabled={deleting}
-              style={{
-                backgroundColor: deleting ? "#991b1b" : "#dc2626",
-                padding: 14,
-                borderRadius: 10,
-                alignItems: "center",
-                marginTop: 12,
-                opacity: deleting ? 0.7 : 1,
-              }}
-            >
-              <Text style={{ color: "#fff", fontWeight: "700" }}>
-                {deleting ? "Eliminando..." : "Eliminar medicación"}
-              </Text>
-            </TouchableOpacity>
+            />
           )}
 
           <PrimaryButton
@@ -210,8 +188,49 @@ async function handleDelete() {
           />
         </>
       ) : (
-        <Text>Cargando…</Text>
+        <Text style={styles.loading}>Cargando…</Text>
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    gap: 12,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  meta: {
+    color: Colors.muted,
+    marginTop: 2,
+  },
+  notes: {
+    color: Colors.muted,
+    marginTop: 6,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: Colors.text,
+    marginTop: 4,
+  },
+  emptyText: {
+    color: Colors.muted,
+  },
+  scheduleTitle: {
+    fontWeight: "700",
+    color: Colors.text,
+  },
+  scheduleMeta: {
+    color: Colors.muted,
+    marginTop: 4,
+  },
+  loading: {
+    color: Colors.muted,
+  },
+});

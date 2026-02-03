@@ -4,9 +4,11 @@ import {
   View,
   Text,
   TextInput,
-  Button,
   Alert,
   ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -16,6 +18,9 @@ import {
 
 import { auth } from "../src/lib/firebase";
 import { getUserById } from "../src/api/users";
+import { Card } from "../src/components/card";
+import { PrimaryButton } from "../src/components/primaryButton";
+import { Colors } from "../src/theme/colors";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -78,51 +83,123 @@ export default function Login() {
   }
 
   return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 24, gap: 12 }}>
-      <Text style={{ fontSize: 26, fontWeight: "700", marginBottom: 12 }}>
-        RecuerdaMed
-      </Text>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <View style={styles.header}>
+        <Image
+          source={require("../assets/images/logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.appName}>RecuerdaMed</Text>
+        <Text style={styles.subtitle}>Accede a tu cuenta</Text>
+      </View>
 
-      <TextInput
-        placeholder="Email"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        autoComplete="off"
-        textContentType="none"
-        importantForAutofill="no"
-        autoCorrect={false}
-        spellCheck={false}
-        value={email}
-        onChangeText={setEmail}
-        onFocus={() => setEmail("")}
-        style={{ borderWidth: 1, padding: 12, borderRadius: 10 }}
-      />
+      <Card>
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          placeholder="correo@ejemplo.com"
+          autoCapitalize="none"
+          keyboardType="email-address"
+          autoComplete="off"
+          textContentType="none"
+          importantForAutofill="no"
+          autoCorrect={false}
+          spellCheck={false}
+          value={email}
+          onChangeText={setEmail}
+          onFocus={() => setEmail("")}
+          style={styles.input}
+          placeholderTextColor={Colors.muted}
+        />
 
-      <TextInput
-        placeholder="Contraseña"
-        secureTextEntry
-        autoComplete="off"
-        textContentType="none"
-        importantForAutofill="no"
-        autoCorrect={false}
-        spellCheck={false}
-        value={pass}
-        onChangeText={setPass}
-        onFocus={() => setPass("")}
-        style={{ borderWidth: 1, padding: 12, borderRadius: 10 }}
-      />
+        <Text style={styles.label}>Contraseña</Text>
+        <TextInput
+          placeholder="Tu contraseña"
+          secureTextEntry
+          autoComplete="off"
+          textContentType="none"
+          importantForAutofill="no"
+          autoCorrect={false}
+          spellCheck={false}
+          value={pass}
+          onChangeText={setPass}
+          onFocus={() => setPass("")}
+          style={styles.input}
+          placeholderTextColor={Colors.muted}
+        />
 
-      {loading ? (
-        <ActivityIndicator />
-      ) : (
-        <>
-          <Button title="Iniciar sesión" onPress={handleLogin} />
-          <Button
-            title="Crear cuenta"
-            onPress={() => router.push("/register")}
-          />
-        </>
+        {loading ? (
+          <ActivityIndicator style={{ marginTop: 12 }} />
+        ) : (
+          <>
+            <PrimaryButton title="Iniciar sesión" onPress={handleLogin} />
+            <PrimaryButton
+              title="Crear cuenta"
+              variant="danger"
+              onPress={() => router.push("/register")}
+            />
+          </>
+        )}
+      </Card>
+
+      {!loading && (
+        <Pressable
+          onPress={() => router.push("/register")}
+          style={styles.linkWrap}
+        >
+          <Text style={styles.linkText}>
+            ¿No tienes cuenta? Crear cuenta
+          </Text>
+        </Pressable>
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 24,
+    justifyContent: "center",
+    gap: 16,
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  appName: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  logo: {
+    width: 96,
+    height: 96,
+    marginBottom: 8,
+  },
+  subtitle: {
+    marginTop: 6,
+    color: Colors.muted,
+  },
+  label: {
+    color: Colors.text,
+    fontWeight: "600",
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    padding: 12,
+    color: Colors.text,
+  },
+  linkWrap: {
+    alignSelf: "center",
+    paddingTop: 6,
+  },
+  linkText: {
+    color: Colors.primary,
+    fontWeight: "600",
+  },
+});

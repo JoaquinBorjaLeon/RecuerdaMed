@@ -34,7 +34,7 @@ export default function RootLayout() {
   }, [router]);
 
   return (
-    <Stack screenOptions={{ headerShown: true }}>
+    <Stack screenOptions={{ headerShown: false }}>
       {/* index.tsx será "/", home.tsx será "/home" */}
     </Stack>
   );
