@@ -78,6 +78,7 @@ export default function EditSchedule() {
       pathname: "/meds/[id]",
       params: {
         id: String(id),
+        ...(isReadOnly ? { readonly: "1" } : {}),
         ...(patientId ? { patientId } : {}),
       },
     } as Href);

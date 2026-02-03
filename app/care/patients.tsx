@@ -36,13 +36,19 @@ export default function CaregiverPatientsScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <Text style={styles.title}>Mis pacientes</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Mis pacientes</Text>
+        <Text style={styles.subtitle}>
+          Accede rápidamente a la medicación y tomas.
+        </Text>
+      </View>
 
       <FlatList
         data={patients}
         keyExtractor={(p) => p.id}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          <Text style={{ color: Colors.muted, marginTop: 20 }}>
+          <Text style={styles.emptyText}>
             No tienes pacientes asignados.
           </Text>
         }
@@ -74,11 +80,24 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: Colors.text,
+  header: {
     marginBottom: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  subtitle: {
+    marginTop: 6,
+    color: Colors.muted,
+  },
+  listContent: {
+    paddingBottom: 24,
+  },
+  emptyText: {
+    color: Colors.muted,
+    marginTop: 12,
   },
   name: {
     fontSize: 16,

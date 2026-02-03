@@ -65,17 +65,20 @@ export default function FamilyPatientDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <Text style={styles.title}>{patient?.fullName ?? "Paciente"}</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>{patient?.fullName ?? "Paciente"}</Text>
 
-      {patient?.email && <Text style={styles.subtitle}>{patient.email}</Text>}
+        {patient?.email && <Text style={styles.subtitle}>{patient.email}</Text>}
+      </View>
 
-      <Text style={styles.section}>Medicación</Text>
+      <Text style={styles.section}>Medicación activa</Text>
 
       <FlatList
         data={meds}
         keyExtractor={(m) => m.id}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          <Text style={{ color: Colors.muted }}>
+          <Text style={styles.emptyText}>
             Este paciente no tiene medicación.
           </Text>
         }
@@ -84,7 +87,7 @@ export default function FamilyPatientDetailScreen() {
             onPress={() =>
               router.push({
                 pathname: "/meds/[id]",
-                params: { id: item.id, readonly: "1" },
+                params: { id: item.id, readonly: "1", patientId },
               })
             }
           >
@@ -95,29 +98,34 @@ export default function FamilyPatientDetailScreen() {
         )}
       />
 
-      <PrimaryButton
-        title="Ver tomas del paciente"
-        onPress={() =>
-          router.push({
-            pathname: "/tomas",
-            params: { patientId },
-          })
-        }
-      />
+      <Text style={styles.section}>Acciones</Text>
+      <Card>
+        <PrimaryButton
+          title="Ver tomas del paciente"
+          onPress={() =>
+            router.push({
+              pathname: "/tomas",
+              params: { patientId },
+            })
+          }
+        />
+      </Card>
 
-      <PrimaryButton
-        title="Volver"
-        onPress={() => router.replace("/family/patients" as Href)}
-      />
+      <PrimaryButton title="Volver" onPress={() => router.replace("/family/patients" as Href)} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: "700", color: Colors.text },
-  subtitle: { color: Colors.muted, marginBottom: 12 },
-  section: { marginTop: 16, fontSize: 18, fontWeight: "700", color: Colors.text },
+  header: {
+    marginBottom: 8,
+  },
+  title: { fontSize: 24, fontWeight: "800", color: Colors.text },
+  subtitle: { color: Colors.muted, marginTop: 6 },
+  section: { marginTop: 12, fontSize: 16, fontWeight: "700", color: Colors.text },
+  listContent: { paddingBottom: 8 },
+  emptyText: { color: Colors.muted },
   cardTitle: { fontWeight: "700", color: Colors.text },
   cardText: { color: Colors.muted },
 });

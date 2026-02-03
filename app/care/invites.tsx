@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, Alert } from "react-native";
+import { View, Text, FlatList, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -56,33 +56,35 @@ export default function InvitesScreen() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, backgroundColor: Colors.background }}>
-      <Text style={{ fontSize: 22, fontWeight: "700", color: Colors.text }}>
-        Invitaciones
-      </Text>
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Invitaciones</Text>
+        <Text style={styles.subtitle}>
+          Acepta o rechaza invitaciones de pacientes.
+        </Text>
+      </View>
 
       <FlatList
         data={invites}
         keyExtractor={(i) => i.id}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          <Text style={{ color: Colors.muted, marginTop: 20 }}>
+          <Text style={styles.emptyText}>
             No tienes invitaciones pendientes.
           </Text>
         }
         renderItem={({ item }) => (
           <Card>
-            <Text style={{ fontWeight: "700", color: Colors.text }}>
+            <Text style={styles.cardTitle}>
               Invitación de
             </Text>
 
-            <Text style={{ marginTop: 4, color: Colors.text }}>
+            <Text style={styles.cardText}>
               {item.patient?.fullName ?? "Paciente"}
             </Text>
 
             {item.patient?.email && (
-              <Text style={{ color: Colors.muted }}>
-                {item.patient.email}
-              </Text>
+              <Text style={styles.cardMuted}>{item.patient.email}</Text>
             )}
 
             <PrimaryButton
@@ -105,3 +107,40 @@ export default function InvitesScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  header: {
+    marginBottom: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  subtitle: {
+    marginTop: 6,
+    color: Colors.muted,
+  },
+  listContent: {
+    paddingBottom: 24,
+  },
+  emptyText: {
+    color: Colors.muted,
+    marginTop: 12,
+  },
+  cardTitle: {
+    fontWeight: "700",
+    color: Colors.text,
+  },
+  cardText: {
+    marginTop: 4,
+    color: Colors.text,
+  },
+  cardMuted: {
+    color: Colors.muted,
+  },
+});

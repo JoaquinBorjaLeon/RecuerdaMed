@@ -100,19 +100,22 @@ export default function PatientDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <Text style={styles.title}>{patient?.fullName ?? "Paciente"}</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>{patient?.fullName ?? "Paciente"}</Text>
 
-      {patient?.email && (
-        <Text style={styles.subtitle}>{patient.email}</Text>
-      )}
+        {patient?.email && (
+          <Text style={styles.subtitle}>{patient.email}</Text>
+        )}
+      </View>
 
-      <Text style={styles.section}>Medicación</Text>
+      <Text style={styles.section}>Medicación activa</Text>
 
       <FlatList
         data={meds}
         keyExtractor={(m) => m.id}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-          <Text style={{ color: Colors.muted }}>
+          <Text style={styles.emptyText}>
             Este paciente no tiene medicación.
           </Text>
         }
@@ -136,49 +139,59 @@ export default function PatientDetailScreen() {
         )}
       />
 
-      <PrimaryButton
-        title="Añadir medicación"
-        onPress={() =>
-          router.push({
-            pathname: "/meds/new",
-            params: { patientId },
-          })
-        }
-      />
+      <Text style={styles.section}>Acciones</Text>
+      <Card>
+        <PrimaryButton
+          title="Añadir medicación"
+          onPress={() =>
+            router.push({
+              pathname: "/meds/new",
+              params: { patientId },
+            })
+          }
+        />
 
-      <PrimaryButton
-        title="Ver tomas del paciente"
-        onPress={() =>
-          router.push({
-            pathname: "/tomas",
-            params: { patientId },
-          })
-        }
-      />
+        <PrimaryButton
+          title="Ver tomas del paciente"
+          onPress={() =>
+            router.push({
+              pathname: "/tomas",
+              params: { patientId },
+            })
+          }
+        />
 
-      <PrimaryButton
-        title="Dejar de cuidar a este paciente"
-        variant="danger"
-        onPress={handleLeave}
-      />
+        <PrimaryButton
+          title="Dejar de cuidar a este paciente"
+          variant="danger"
+          onPress={handleLeave}
+        />
+      </Card>
 
-      <PrimaryButton
-        title="Volver"
-        onPress={() => router.replace("/care/patients")}
-      />
+      <PrimaryButton title="Volver" onPress={() => router.replace("/care/patients")} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: "700", color: Colors.text },
-  subtitle: { fontSize: 14, color: Colors.muted, marginBottom: 12 },
+  header: {
+    marginBottom: 8,
+  },
+  title: { fontSize: 24, fontWeight: "800", color: Colors.text },
+  subtitle: { fontSize: 14, color: Colors.muted, marginTop: 6 },
   section: {
+    fontSize: 16,
     fontWeight: "700",
     color: Colors.text,
-    marginBottom: 8,
-    marginTop: 16,
+    marginBottom: 6,
+    marginTop: 12,
+  },
+  listContent: {
+    paddingBottom: 8,
+  },
+  emptyText: {
+    color: Colors.muted,
   },
   cardTitle: { fontSize: 16, fontWeight: "700", color: Colors.text },
   cardText: { color: Colors.muted, marginTop: 2 },

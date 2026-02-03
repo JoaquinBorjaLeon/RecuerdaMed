@@ -70,14 +70,20 @@ export default function ManageFamilies() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <Text style={styles.title}>Gestionar familiares</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Gestionar familiares</Text>
+        <Text style={styles.subtitle}>
+          Administra qué familiares tienen acceso.
+        </Text>
+      </View>
 
       <FlatList
         data={items}
         keyExtractor={(i) => i.linkId}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           !loading ? (
-            <Text style={{ color: Colors.muted, marginTop: 20 }}>
+            <Text style={styles.emptyText}>
               No tienes familiares asignados.
             </Text>
           ) : null
@@ -111,11 +117,24 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: Colors.text,
+  header: {
     marginBottom: 12,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: Colors.text,
+  },
+  subtitle: {
+    marginTop: 6,
+    color: Colors.muted,
+  },
+  listContent: {
+    paddingBottom: 24,
+  },
+  emptyText: {
+    color: Colors.muted,
+    marginTop: 12,
   },
   name: {
     fontSize: 16,

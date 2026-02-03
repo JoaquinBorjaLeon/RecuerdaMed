@@ -203,6 +203,19 @@ export async function generateTomasFromSchedule(
   if (!schedule.patientId || !schedule.medId || !schedule.id) return;
   if (!schedule.startDate) return;
 
+  let medSnapshot: { name?: string; strength?: string; form?: string } | null = null;
+  try {
+    const medSnap = await getDoc(doc(db, "medications", schedule.medId));
+    if (medSnap.exists()) {
+      const data = medSnap.data() as any;
+      medSnapshot = {
+        name: data?.name,
+        strength: data?.strength,
+        form: data?.form,
+      };
+    }
+  } catch {}
+
   const tolerance = schedule.toleranceMinutes ?? 30;
 
   const today = startOfDay(new Date());
@@ -302,6 +315,9 @@ export async function generateTomasFromSchedule(
       scheduleId: schedule.id,
       medId: schedule.medId,
       patientId: schedule.patientId,
+      medName: medSnapshot?.name,
+      medStrength: medSnapshot?.strength,
+      medForm: medSnapshot?.form,
       plannedAt: plannedISO,
       windowStart: iso(
         new Date(plannedAt.getTime() - tolerance * 60000)

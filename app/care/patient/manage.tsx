@@ -71,15 +71,21 @@ export default function ManageCareRelations() {
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <Text style={styles.title}>Gestionar</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Gestionar accesos</Text>
+        <Text style={styles.subtitle}>
+          Controla quién puede ver tus tomas y medicación.
+        </Text>
+      </View>
 
       <Text style={styles.section}>Cuidadores</Text>
       <FlatList
         data={caregivers}
         keyExtractor={(i) => i.linkId}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           !loading ? (
-            <Text style={{ color: Colors.muted, marginTop: 8 }}>
+            <Text style={styles.emptyText}>
               No tienes cuidadores asignados.
             </Text>
           ) : null
@@ -105,9 +111,10 @@ export default function ManageCareRelations() {
       <FlatList
         data={families}
         keyExtractor={(i) => i.linkId}
+        contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           !loading ? (
-            <Text style={{ color: Colors.muted, marginTop: 8 }}>
+            <Text style={styles.emptyText}>
               No tienes familiares asignados.
             </Text>
           ) : null
@@ -136,8 +143,14 @@ export default function ManageCareRelations() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16 },
-  title: { fontSize: 22, fontWeight: "700", color: Colors.text, marginBottom: 12 },
-  section: { fontSize: 18, fontWeight: "700", color: Colors.text, marginTop: 12 },
+  header: {
+    marginBottom: 12,
+  },
+  title: { fontSize: 24, fontWeight: "800", color: Colors.text },
+  subtitle: { marginTop: 6, color: Colors.muted },
+  section: { fontSize: 16, fontWeight: "700", color: Colors.text, marginTop: 12 },
+  listContent: { paddingBottom: 8 },
+  emptyText: { color: Colors.muted, marginTop: 8 },
   name: { fontSize: 16, fontWeight: "700", color: Colors.text },
   email: { color: Colors.muted },
 });

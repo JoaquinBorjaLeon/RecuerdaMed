@@ -41,6 +41,11 @@ export type Toma = {
   medId: string;
   scheduleId: string;
 
+  // snapshot de medicación para historial
+  medName?: string;
+  medStrength?: string;
+  medForm?: string;
+
   plannedAt: string;      // ISO
   windowStart: string;    // ISO
   windowEnd: string;      // ISO

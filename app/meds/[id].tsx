@@ -129,17 +129,22 @@ async function handleDelete() {
             }
             renderItem={({ item }) => (
               <Card
-                onPress={() =>
-                  router.push({
-                    pathname: "/meds/[id]/schedule/[sid]",
-                    params: {
-                      id: String(id),
-                      sid: item.id,
-                      ...(isReadOnly ? { readonly: "1" } : {}),
-                      ...(effectivePatientId ? { patientId: effectivePatientId } : {}),
-                    },
-                  })
-                }
+                {...(!isReadOnly
+                  ? {
+                      onPress: () =>
+                        router.push({
+                          pathname: "/meds/[id]/schedule/[sid]",
+                          params: {
+                            id: String(id),
+                            sid: item.id,
+                            ...(isReadOnly ? { readonly: "1" } : {}),
+                            ...(effectivePatientId
+                              ? { patientId: effectivePatientId }
+                              : {}),
+                          },
+                        }),
+                    }
+                  : {})}
               >
                 <Text style={styles.scheduleTitle}>{renderSchedule(item)}</Text>
                 <Text style={styles.scheduleMeta}>
@@ -178,10 +183,15 @@ async function handleDelete() {
             onPress={() =>
               router.replace(
                 patientId
-                  ? ({
-                      pathname: "/care/patient/[id]",
-                      params: { id: String(patientId) },
-                    } as Href)
+                  ? (isReadOnly
+                      ? ({
+                          pathname: "/family/patient/[id]",
+                          params: { id: String(patientId) },
+                        } as Href)
+                      : ({
+                          pathname: "/care/patient/[id]",
+                          params: { id: String(patientId) },
+                        } as Href))
                   : ("/home" as Href)
               )
             }
