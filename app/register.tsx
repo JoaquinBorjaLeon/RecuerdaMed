@@ -10,12 +10,15 @@ import {
   Pressable,
   ScrollView,
   Image,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import * as ImagePicker from "expo-image-picker";
 
 import { auth } from "../src/lib/firebase";
 import { upsertUserProfile } from "../src/api/users";
+import { uploadUserAvatar } from "../src/lib/storage";
 
 import { PrimaryButton } from "../src/components/primaryButton";
 import { Card } from "../src/components/card";
@@ -30,7 +33,30 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [role, setRole] = useState<Role>("PATIENT");
+  const [photoURL, setPhotoURL] = useState("");
+  const [localUri, setLocalUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  async function pickImage() {
+    if (Platform.OS !== "web") {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert("Permiso requerido", "Activa acceso a la galería.");
+        return;
+      }
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets?.[0]?.uri) {
+      setLocalUri(result.assets[0].uri);
+    }
+  }
 
   function validate() {
     if (!fullName.trim()) {
@@ -60,11 +86,17 @@ export default function RegisterScreen() {
         pass
       );
 
+      let finalPhotoURL = photoURL.trim();
+      if (localUri) {
+        finalPhotoURL = await uploadUserAvatar(cred.user.uid, localUri);
+      }
+
       await upsertUserProfile({
         uid: cred.user.uid,
         email: email.trim().toLowerCase(),
         fullName: fullName.trim(),
         role,
+        photoURL: finalPhotoURL || undefined,
       });
 
       Alert.alert("Cuenta creada", "Registro completado correctamente.");
@@ -89,6 +121,33 @@ export default function RegisterScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Card>
+        <View style={styles.avatarRow}>
+          <View style={styles.avatarWrap}>
+            {localUri || photoURL ? (
+              <Image
+                source={{ uri: localUri || photoURL }}
+                style={styles.avatar}
+              />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarText}>?</Text>
+              </View>
+            )}
+          </View>
+          <Pressable style={styles.avatarAction} onPress={pickImage}>
+            <Text style={styles.avatarActionText}>Elegir de galería</Text>
+          </Pressable>
+        </View>
+
+        <Text style={styles.label}>URL de imagen</Text>
+        <TextInput
+          value={photoURL}
+          onChangeText={setPhotoURL}
+          placeholder="https://..."
+          autoCapitalize="none"
+          style={styles.input}
+        />
+
         <Text style={styles.label}>Nombre completo</Text>
         <TextInput
           value={fullName}
@@ -253,6 +312,46 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     marginBottom: 8,
+  },
+  avatarRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+    gap: 12,
+  },
+  avatarWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    overflow: "hidden",
+    backgroundColor: Colors.card,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatar: {
+    width: 72,
+    height: 72,
+  },
+  avatarFallback: {
+    width: 72,
+    height: 72,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: Colors.text,
+  },
+  avatarAction: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: Colors.card,
+  },
+  avatarActionText: {
+    color: Colors.text,
+    fontWeight: "600",
   },
   label: {
     fontWeight: "600",

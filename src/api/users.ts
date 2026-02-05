@@ -24,6 +24,7 @@ export type UserProfile = {
   fullName: string;
   email: string;
   role: UserRole;
+  photoURL?: string;
   createdAt?: any;
 };
 
@@ -38,8 +39,9 @@ export async function upsertUserProfile(input: {
   fullName: string;
   email: string;
   role: UserRole;
+  photoURL?: string;
 }) {
-  const { uid, fullName, email, role } = input;
+  const { uid, fullName, email, role, photoURL } = input;
 
   await setDoc(
     doc(db, "users", uid),
@@ -47,7 +49,23 @@ export async function upsertUserProfile(input: {
       fullName,
       email: email.toLowerCase(),
       role,
+      ...(photoURL ? { photoURL } : {}),
       createdAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
+/**
+ * Actualiza campos editables del perfil
+ */
+export async function updateUserProfile(uid: string, patch: Partial<UserProfile>) {
+  const { fullName, photoURL } = patch;
+  await setDoc(
+    doc(db, "users", uid),
+    {
+      ...(fullName ? { fullName } : {}),
+      ...(photoURL ? { photoURL } : {}),
     },
     { merge: true }
   );

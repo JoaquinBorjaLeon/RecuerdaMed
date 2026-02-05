@@ -1,6 +1,6 @@
 // app/home.tsx
 import { useEffect, useRef, useState } from "react";
-import { View, Text, FlatList, StyleSheet, Platform } from "react-native";
+import { View, Text, FlatList, StyleSheet, Platform, Image, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -94,6 +94,26 @@ export default function Home() {
     router.replace("/");
   }
 
+  function getInitials(name?: string | null) {
+    if (!name) return "?";
+    const parts = name.trim().split(/\s+/);
+    const initials = parts.slice(0, 2).map((p) => p[0]?.toUpperCase()).join("");
+    return initials || "?";
+  }
+
+  function renderAvatar() {
+    if (!user) return null;
+    return (
+      <Pressable style={styles.avatarWrap} onPress={() => router.push("/profile")}>
+        {user.photoURL ? (
+          <Image source={{ uri: user.photoURL }} style={styles.avatar} />
+        ) : (
+          <Text style={styles.avatarText}>{getInitials(user.fullName)}</Text>
+        )}
+      </Pressable>
+    );
+  }
+
   if (!user) return null;
 
   /* =========================
@@ -103,8 +123,13 @@ export default function Home() {
     return (
       <View style={[styles.container, { backgroundColor: Colors.background }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Panel del cuidador</Text>
-          <Text style={styles.subtitle}>Gestiona a tus pacientes</Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerText}>
+              <Text style={styles.title}>Panel del cuidador</Text>
+              <Text style={styles.subtitle}>Gestiona a tus pacientes</Text>
+            </View>
+            {renderAvatar()}
+          </View>
         </View>
 
         <Card>
@@ -134,8 +159,13 @@ export default function Home() {
     return (
       <View style={[styles.container, { backgroundColor: Colors.background }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Panel familiar</Text>
-          <Text style={styles.subtitle}>Consulta y seguimiento</Text>
+          <View style={styles.headerRow}>
+            <View style={styles.headerText}>
+              <Text style={styles.title}>Panel familiar</Text>
+              <Text style={styles.subtitle}>Consulta y seguimiento</Text>
+            </View>
+            {renderAvatar()}
+          </View>
         </View>
 
         <Card>
@@ -170,10 +200,15 @@ export default function Home() {
         ListHeaderComponent={
           <>
             <View style={styles.header}>
-              <Text style={styles.title}>Mis medicaciones</Text>
-              <Text style={styles.subtitle}>
-                Controla tus dosis y horarios
-              </Text>
+              <View style={styles.headerRow}>
+                <View style={styles.headerText}>
+                  <Text style={styles.title}>Mis medicaciones</Text>
+                  <Text style={styles.subtitle}>
+                    Controla tus dosis y horarios
+                  </Text>
+                </View>
+                {renderAvatar()}
+              </View>
             </View>
 
             <Text style={styles.sectionTitle}>Listado</Text>
@@ -239,6 +274,15 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 12,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  headerText: {
+    flex: 1,
+  },
   title: {
     fontSize: 24,
     fontWeight: "800",
@@ -256,6 +300,23 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 24,
+  },
+  avatarWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.card,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+  },
+  avatarText: {
+    fontWeight: "700",
+    color: Colors.text,
   },
   emptyText: {
     color: Colors.muted,
