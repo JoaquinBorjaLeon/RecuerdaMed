@@ -9,6 +9,7 @@ import {
   Pressable,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { onAuthStateChanged } from "firebase/auth";
@@ -69,7 +70,7 @@ export default function ProfileScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -77,6 +78,42 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets?.[0]?.uri) {
       setLocalUri(result.assets[0].uri);
+    }
+  }
+
+  function handleRemovePhoto() {
+    setLocalUri(null);
+    setPhotoURL("");
+  }
+
+  function isValidURL(url: string): boolean {
+    if (!url) return true;
+    if (!/^https?:\/\/.+\..+/.test(url)) return false;
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "https:" || parsed.protocol === "http:";
+    } catch {
+      return false;
+    }
+  }
+
+  async function validateImageURL(url: string): Promise<boolean> {
+    if (!url) return true;
+    try {
+      // Try HEAD first, fall back to GET if blocked
+      let res: Response;
+      try {
+        res = await fetch(url, { method: "HEAD" });
+      } catch {
+        res = await fetch(url, { method: "GET" });
+      }
+      const ct = res.headers.get("content-type") ?? "";
+      if (ct.startsWith("image/")) return true;
+      // Some CDNs don't return content-type on HEAD — check extension
+      const path = new URL(url).pathname.toLowerCase();
+      return /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/.test(path);
+    } catch {
+      return false;
     }
   }
 
@@ -89,16 +126,34 @@ export default function ProfileScreen() {
       return;
     }
 
+    const trimmedURL = photoURL.trim();
+    if (trimmedURL && !isValidURL(trimmedURL)) {
+      Alert.alert("URL no válida", "Introduce una URL que empiece por http:// o https://");
+      return;
+    }
+
     setSaving(true);
     try {
-      let finalPhotoURL = photoURL.trim();
+      if (trimmedURL && !localUri) {
+        const isImage = await validateImageURL(trimmedURL);
+        if (!isImage) {
+          setSaving(false);
+          Alert.alert(
+            "No es una imagen",
+            "La URL no apunta a una imagen válida. Verifica el enlace."
+          );
+          return;
+        }
+      }
+
+      let finalPhotoURL = trimmedURL;
       if (localUri) {
         finalPhotoURL = await uploadUserAvatar(user.id, localUri);
       }
 
       await updateUserProfile(user.id, {
         fullName: trimmedName,
-        photoURL: finalPhotoURL || undefined,
+        photoURL: finalPhotoURL,
       });
 
       setLocalUri(null);
@@ -124,7 +179,7 @@ export default function ProfileScreen() {
   if (!user) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Editar perfil</Text>
         <Text style={styles.subtitle}>Actualiza tu nombre e imagen</Text>
@@ -141,9 +196,16 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
-          <Pressable style={styles.avatarAction} onPress={pickImage}>
-            <Text style={styles.avatarActionText}>Elegir de galería</Text>
-          </Pressable>
+          <View style={styles.avatarActions}>
+            <Pressable style={styles.avatarAction} onPress={pickImage}>
+              <Text style={styles.avatarActionText}>Elegir de galería</Text>
+            </Pressable>
+            {(avatarUri || localUri) && (
+              <Pressable style={[styles.avatarAction, styles.avatarActionDanger]} onPress={handleRemovePhoto}>
+                <Text style={styles.avatarActionDangerText}>Quitar foto</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
 
         <Text style={styles.label}>Nombre completo</Text>
@@ -169,7 +231,7 @@ export default function ProfileScreen() {
         />
         <PrimaryButton title="Volver" variant="danger" onPress={() => router.replace("/home")} />
       </Card>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -220,14 +282,24 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: Colors.text,
   },
+  avatarActions: {
+    gap: 8,
+  },
   avatarAction: {
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 10,
     backgroundColor: Colors.card,
   },
+  avatarActionDanger: {
+    backgroundColor: "#FEE2E2",
+  },
   avatarActionText: {
     color: Colors.text,
+    fontWeight: "600",
+  },
+  avatarActionDangerText: {
+    color: Colors.danger,
     fontWeight: "600",
   },
   label: {

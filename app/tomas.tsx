@@ -1,6 +1,7 @@
 // app/tomas.tsx
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, Alert, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Href } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
@@ -142,7 +143,7 @@ export default function TomasScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>
           {patientId ? "Tomas del paciente" : "Mis tomas"}
@@ -213,7 +214,7 @@ export default function TomasScreen() {
           )
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

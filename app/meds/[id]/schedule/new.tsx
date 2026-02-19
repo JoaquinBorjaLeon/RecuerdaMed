@@ -8,6 +8,7 @@ import {
   Platform,
   useColorScheme,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../../../src/lib/firebase";
@@ -175,7 +176,7 @@ export default function NewSchedule() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12, backgroundColor: bgColor }}>
+    <SafeAreaView style={{ flex: 1, padding: 16, gap: 12, backgroundColor: bgColor }}>
       <Text style={{ fontSize: 22, fontWeight: "700", color: textColor }}>
         Nueva planificación
       </Text>
@@ -270,6 +271,6 @@ export default function NewSchedule() {
           })
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }

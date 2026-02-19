@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { View, Text, TextInput, Alert, StyleSheet, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { auth } from "../../src/lib/firebase";
 import { inviteCaregiver } from "../../src/api/careLinks";
@@ -48,7 +49,7 @@ export default function InviteCaregiverScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <Text style={styles.title}>Invitar cuidador o familiar</Text>
 
       <Text style={styles.label}>Email</Text>
@@ -64,7 +65,7 @@ export default function InviteCaregiverScreen() {
 
       <PrimaryButton title="Enviar invitación" onPress={handleInvite} />
       <PrimaryButton title="Cancelar" variant="danger" onPress={() => router.replace("/home")} />
-    </View>
+    </SafeAreaView>
   );
 }
 

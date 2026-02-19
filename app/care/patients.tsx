@@ -1,6 +1,7 @@
 // app/care/patients.tsx
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -35,7 +36,7 @@ export default function CaregiverPatientsScreen() {
   }, [router]);
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Mis pacientes</Text>
         <Text style={styles.subtitle}>
@@ -71,7 +72,7 @@ export default function CaregiverPatientsScreen() {
         title="Volver"
         onPress={() => router.replace("/home")}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

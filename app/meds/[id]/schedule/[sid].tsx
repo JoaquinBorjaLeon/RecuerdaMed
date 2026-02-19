@@ -8,6 +8,7 @@ import {
   Platform,
   useColorScheme,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Href } from "expo-router";
 import {
@@ -248,7 +249,7 @@ export default function EditSchedule() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, gap: 12, backgroundColor: bgColor }}>
+    <SafeAreaView style={{ flex: 1, padding: 16, gap: 12, backgroundColor: bgColor }}>
       <Text style={{ fontSize: 22, fontWeight: "700", color: textColor }}>
         Editar planificación
       </Text>
@@ -350,6 +351,6 @@ export default function EditSchedule() {
         </>
       )}
       <Button title="Cancelar" onPress={() => goToMed()} />
-    </View>
+    </SafeAreaView>
   );
 }

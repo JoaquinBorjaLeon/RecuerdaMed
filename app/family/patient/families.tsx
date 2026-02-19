@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, Alert, Platform, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -69,7 +70,7 @@ export default function ManageFamilies() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Gestionar familiares</Text>
         <Text style={styles.subtitle}>
@@ -108,7 +109,7 @@ export default function ManageFamilies() {
       />
 
       <PrimaryButton title="Volver" onPress={() => router.replace("/home")} />
-    </View>
+    </SafeAreaView>
   );
 }
 

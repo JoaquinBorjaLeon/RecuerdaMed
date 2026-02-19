@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -56,7 +57,7 @@ export default function InvitesScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Invitaciones</Text>
         <Text style={styles.subtitle}>
@@ -104,7 +105,7 @@ export default function InvitesScreen() {
         title="Volver al inicio"
         onPress={() => router.replace("/home")}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

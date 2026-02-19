@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, Alert, Platform, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Href } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
@@ -109,7 +110,7 @@ async function handleDelete() {
 
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       {med ? (
         <>
           <Card>
@@ -200,7 +201,7 @@ async function handleDelete() {
       ) : (
         <Text style={styles.loading}>Cargando…</Text>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

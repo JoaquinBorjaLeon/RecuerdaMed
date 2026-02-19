@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { View, Text, TextInput, Alert, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -63,7 +64,7 @@ export default function NewMedication() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <Text style={styles.title}>Nueva medicación</Text>
 
       <Text style={styles.label}>Nombre *</Text>
@@ -116,7 +117,7 @@ export default function NewMedication() {
             : router.replace("/home")
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

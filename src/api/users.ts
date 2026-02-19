@@ -60,15 +60,12 @@ export async function upsertUserProfile(input: {
  * Actualiza campos editables del perfil
  */
 export async function updateUserProfile(uid: string, patch: Partial<UserProfile>) {
-  const { fullName, photoURL } = patch;
-  await setDoc(
-    doc(db, "users", uid),
-    {
-      ...(fullName ? { fullName } : {}),
-      ...(photoURL ? { photoURL } : {}),
-    },
-    { merge: true }
-  );
+  const data: Record<string, any> = {};
+  if (patch.fullName !== undefined) data.fullName = patch.fullName;
+  if (patch.photoURL !== undefined) data.photoURL = patch.photoURL;
+
+  if (Object.keys(data).length === 0) return;
+  await setDoc(doc(db, "users", uid), data, { merge: true });
 }
 
 /**

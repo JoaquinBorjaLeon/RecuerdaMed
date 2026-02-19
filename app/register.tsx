@@ -12,6 +12,7 @@ import {
   Image,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import * as ImagePicker from "expo-image-picker";
@@ -47,7 +48,7 @@ export default function RegisterScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.8,
@@ -109,7 +110,7 @@ export default function RegisterScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
         <Image
           source={require("../assets/images/logo.png")}
@@ -286,7 +287,7 @@ export default function RegisterScreen() {
           />
         </Card>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,6 +1,7 @@
 // app/home.tsx
 import { useEffect, useRef, useState } from "react";
 import { View, Text, FlatList, StyleSheet, Platform, Image, Pressable } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -90,6 +91,15 @@ export default function Home() {
   }, [router, notificationsReady]);
 
   async function handleLogout() {
+    // Desuscribir listeners ANTES de cerrar sesión para evitar permission-denied
+    if (unsubMedsRef.current) {
+      unsubMedsRef.current();
+      unsubMedsRef.current = null;
+    }
+    if (unsubAuthRef.current) {
+      unsubAuthRef.current();
+      unsubAuthRef.current = null;
+    }
     await signOut(auth);
     router.replace("/");
   }
@@ -121,7 +131,7 @@ export default function Home() {
      ========================= */
   if (user.role === "CAREGIVER") {
     return (
-      <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <View style={styles.headerText}>
@@ -148,7 +158,7 @@ export default function Home() {
             onPress={handleLogout}
           />
         </Card>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -157,7 +167,7 @@ export default function Home() {
      ========================= */
   if (user.role === "FAMILY") {
     return (
-      <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
         <View style={styles.header}>
           <View style={styles.headerRow}>
             <View style={styles.headerText}>
@@ -184,7 +194,7 @@ export default function Home() {
             onPress={handleLogout}
           />
         </Card>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -192,7 +202,7 @@ export default function Home() {
      👤 HOME PACIENTE
      ========================= */
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <FlatList
         data={meds}
         keyExtractor={(item) => item.id}
@@ -262,7 +272,7 @@ export default function Home() {
           </>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Platform } from "react-native";
 import { Stack, useRouter } from "expo-router";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 
 export default function RootLayout() {
@@ -34,8 +35,10 @@ export default function RootLayout() {
   }, [router]);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* index.tsx será "/", home.tsx será "/home" */}
-    </Stack>
+    <SafeAreaProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* index.tsx será "/", home.tsx será "/home" */}
+      </Stack>
+    </SafeAreaProvider>
   );
 }

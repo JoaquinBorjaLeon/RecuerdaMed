@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, Alert, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 
@@ -45,7 +46,7 @@ export default function MyCaregivers() {
   }
 
   return (
-    <View style={{ flex: 1, padding: 16, backgroundColor: Colors.background }}>
+    <SafeAreaView style={{ flex: 1, padding: 16, backgroundColor: Colors.background }}>
       <Text style={{ fontSize: 22, fontWeight: "700", color: Colors.text }}>
         Mis cuidadores
       </Text>
@@ -75,6 +76,6 @@ export default function MyCaregivers() {
           </Card>
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }

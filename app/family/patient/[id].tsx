@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Href } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
@@ -64,7 +65,7 @@ export default function FamilyPatientDetailScreen() {
   }, [patientId]);
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>{patient?.fullName ?? "Paciente"}</Text>
 
@@ -112,7 +113,7 @@ export default function FamilyPatientDetailScreen() {
       </Card>
 
       <PrimaryButton title="Volver" onPress={() => router.replace("/family/patients" as Href)} />
-    </View>
+    </SafeAreaView>
   );
 }
 

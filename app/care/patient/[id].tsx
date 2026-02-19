@@ -7,6 +7,7 @@ import {
   Alert,
   Platform,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
 import {
@@ -99,7 +100,7 @@ export default function PatientDetailScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.title}>{patient?.fullName ?? "Paciente"}</Text>
 
@@ -169,7 +170,7 @@ export default function PatientDetailScreen() {
       </Card>
 
       <PrimaryButton title="Volver" onPress={() => router.replace("/care/patients")} />
-    </View>
+    </SafeAreaView>
   );
 }
 

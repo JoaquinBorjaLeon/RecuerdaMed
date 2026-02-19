@@ -10,6 +10,7 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   onAuthStateChanged,
@@ -83,7 +84,7 @@ export default function Login() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <View style={styles.header}>
         <Image
           source={require("../assets/images/logo.png")}
@@ -152,7 +153,7 @@ export default function Login() {
           </Text>
         </Pressable>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
