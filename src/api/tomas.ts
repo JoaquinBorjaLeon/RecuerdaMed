@@ -18,6 +18,7 @@ import type { Toma, Schedule } from "../types";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { getActiveCaregivers } from "./careLinks";
+import { getActiveFamilies } from "./familyLinks";
 import { getPushTokensByUserIds } from "./pushTokens";
 import { sendPushToUsers } from "./notifications";
 import { getUserById } from "./users";
@@ -47,14 +48,21 @@ function jsDayToISOdow(jsDay: number) {
 const EXPIRY_WARNING_MINUTES = 5;
 
 async function getAllLinkedTokens(patientId: string) {
-  const caregiverIds = await getActiveCaregivers(patientId);
-  const allIds = Array.from(new Set([patientId, ...caregiverIds]));
+  const [caregiverIds, familyIds] = await Promise.all([
+    getActiveCaregivers(patientId),
+    getActiveFamilies(patientId),
+  ]);
+  const allIds = Array.from(new Set([patientId, ...caregiverIds, ...familyIds]));
   return getPushTokensByUserIds(allIds);
 }
 
-async function getLinkedCaregiverTokens(patientId: string) {
-  const caregiverIds = await getActiveCaregivers(patientId);
-  return getPushTokensByUserIds(caregiverIds);
+async function getLinkedCaregiverAndFamilyTokens(patientId: string) {
+  const [caregiverIds, familyIds] = await Promise.all([
+    getActiveCaregivers(patientId),
+    getActiveFamilies(patientId),
+  ]);
+  const allIds = Array.from(new Set([...caregiverIds, ...familyIds]));
+  return getPushTokensByUserIds(allIds);
 }
 
 async function buildTomaMessage(toma: Toma) {
@@ -128,7 +136,7 @@ export async function confirmToma(tomaId: string, toma: Toma) {
     confirmedAt: new Date().toISOString(),
   });
 
-  const tokens = await getLinkedCaregiverTokens(toma.patientId);
+  const tokens = await getLinkedCaregiverAndFamilyTokens(toma.patientId);
   const { medName, patientName } = await buildTomaMessage(toma);
   const confirmedAt = new Date().toLocaleString("es-ES", {
     day: "2-digit",
