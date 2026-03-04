@@ -4,6 +4,7 @@ import { Stack, useRouter } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as Notifications from "expo-notifications";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 export default function RootLayout() {
   const router = useRouter();
@@ -38,6 +39,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <Analytics />
+      <SpeedInsights />
       <Stack screenOptions={{ headerShown: false }}>
         {/* index.tsx será "/", home.tsx será "/home" */}
       </Stack>
