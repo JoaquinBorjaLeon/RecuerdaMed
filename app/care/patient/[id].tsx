@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -129,13 +130,20 @@ export default function PatientDetailScreen() {
               })
             }
           >
-            <Text style={styles.cardTitle}>{item.name}</Text>
-            {!!item.strength && (
-              <Text style={styles.cardText}>{item.strength}</Text>
-            )}
-            {!!item.form && (
-              <Text style={styles.cardText}>{item.form}</Text>
-            )}
+            <View style={styles.medRow}>
+              {!!item.imageUrl && (
+                <Image source={{ uri: item.imageUrl }} style={styles.medThumb} />
+              )}
+              <View style={styles.medInfo}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                {!!item.strength && (
+                  <Text style={styles.cardText}>{item.strength}</Text>
+                )}
+                {!!item.form && (
+                  <Text style={styles.cardText}>{item.form}</Text>
+                )}
+              </View>
+            </View>
           </Card>
         )}
       />
@@ -195,5 +203,19 @@ const styles = StyleSheet.create({
     color: Colors.muted,
   },
   cardTitle: { fontSize: 16, fontWeight: "700", color: Colors.text },
+  medRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  medInfo: {
+    flex: 1,
+  },
+  medThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    backgroundColor: "#E5E7EB",
+  },
   cardText: { color: Colors.muted, marginTop: 2 },
 });

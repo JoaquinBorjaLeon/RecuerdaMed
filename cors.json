@@ -1,0 +1,16 @@
+[
+  {
+    "origin": [
+      "http://localhost:8081",
+      "https://recuerda-med.vercel.app"
+    ],
+    "method": ["GET", "POST", "PUT", "HEAD", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "x-goog-resumable",
+      "x-goog-meta-*"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

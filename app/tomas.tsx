@@ -88,7 +88,9 @@ export default function TomasScreen() {
         })
       );
 
-      const filtered = entries.filter(Boolean) as readonly [string, Medication][];
+      const filtered = entries.filter(
+        (entry): entry is readonly [string, Medication] => Boolean(entry)
+      );
       if (!filtered.length || cancelled) return;
 
       setMedsById((prev) => {
