@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  View,
   Text,
   TextInput,
   Button,
@@ -75,7 +74,7 @@ export default function EditSchedule() {
   const textColor = isDark ? "#F9FAFB" : "#111827";
   const bgColor = isDark ? "#0B1220" : "#FFFFFF";
 
-  const goToMed = () => {
+  const goToMed = useCallback(() => {
     router.replace({
       pathname: "/meds/[id]",
       params: {
@@ -84,7 +83,7 @@ export default function EditSchedule() {
         ...(patientId ? { patientId } : {}),
       },
     } as Href);
-  };
+  }, [router, id, isReadOnly, patientId]);
 
   useEffect(() => {
     (async () => {
@@ -137,7 +136,7 @@ export default function EditSchedule() {
         goToMed();
       }
     })();
-  }, [sid, router, patientId]);
+  }, [sid, patientId, goToMed]);
 
   async function save() {
     if (locked) {

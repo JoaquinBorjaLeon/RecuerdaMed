@@ -66,7 +66,7 @@ export default function TomasScreen() {
       if (unsubTomas) unsubTomas();
       unsubAuth();
     };
-  }, [router, patientId]);
+  }, [router, patientId, tomaId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,7 +88,7 @@ export default function TomasScreen() {
         })
       );
 
-      const filtered = entries.filter(Boolean) as Array<readonly [string, Medication]>;
+      const filtered = entries.filter(Boolean) as readonly [string, Medication][];
       if (!filtered.length || cancelled) return;
 
       setMedsById((prev) => {
