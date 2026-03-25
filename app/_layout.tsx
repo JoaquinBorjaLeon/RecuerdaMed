@@ -38,8 +38,12 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <Analytics />
-      <SpeedInsights />
+      {Platform.OS === "web" && (
+        <>
+          <Analytics />
+          <SpeedInsights />
+        </>
+      )}
       <Stack screenOptions={{ headerShown: false }}>
         {/* index.tsx será "/", home.tsx será "/home" */}
       </Stack>

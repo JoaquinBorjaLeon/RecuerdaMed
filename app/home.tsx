@@ -233,13 +233,20 @@ export default function Home() {
               router.push({ pathname: "/meds/[id]", params: { id: item.id } })
             }
           >
-            <Text style={styles.cardTitle}>{item.name}</Text>
-            {!!item.strength && (
-              <Text style={styles.cardText}>{item.strength}</Text>
-            )}
-            {!!item.form && (
-              <Text style={styles.cardText}>{item.form}</Text>
-            )}
+            <View style={styles.medRow}>
+              {!!item.imageUrl && (
+                <Image source={{ uri: item.imageUrl }} style={styles.medThumb} />
+              )}
+              <View style={styles.medInfo}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                {!!item.strength && (
+                  <Text style={styles.cardText}>{item.strength}</Text>
+                )}
+                {!!item.form && (
+                  <Text style={styles.cardText}>{item.form}</Text>
+                )}
+              </View>
+            </View>
           </Card>
         )}
         ListFooterComponent={
@@ -336,6 +343,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     color: Colors.text,
+  },
+  medRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  medInfo: {
+    flex: 1,
+  },
+  medThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    backgroundColor: "#E5E7EB",
   },
   cardText: {
     color: Colors.muted,

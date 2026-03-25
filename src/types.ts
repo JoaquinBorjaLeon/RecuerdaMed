@@ -13,6 +13,7 @@ export type Medication = {
   form?: string;              // comprimido, jarabe...
   strength?: string;          // 500 mg...
   notes?: string;
+  imageUrl?: string;
   createdAt: any;
   createdBy?: string;          
 };

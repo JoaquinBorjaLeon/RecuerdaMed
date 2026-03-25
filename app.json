@@ -17,11 +17,12 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Necesitamos acceso a tus fotos para elegir tu avatar."
+        "NSPhotoLibraryUsageDescription": "Necesitamos acceso a tus fotos para adjuntar imágenes de la medicación.",
+        "NSCameraUsageDescription": "Necesitamos acceso a la cámara para fotografiar la caja o pastilla."
       }
     },
     "android": {
-      "permissions": ["READ_MEDIA_IMAGES", "READ_EXTERNAL_STORAGE"],
+      "permissions": ["READ_MEDIA_IMAGES", "READ_EXTERNAL_STORAGE", "CAMERA"],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
