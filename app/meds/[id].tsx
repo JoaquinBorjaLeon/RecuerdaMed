@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, Alert, Platform, StyleSheet } from "react-native";
+import { Text, FlatList, Alert, Platform, StyleSheet, Image, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Href } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
+import * as ImagePicker from "expo-image-picker";
+import { auth, db } from "../../src/lib/firebase";
 
-import { db } from "../../src/lib/firebase";
 import type { Medication, Schedule } from "../../src/types";
 import { listenSchedulesByMed } from "../../src/api/schedules";
-import { deleteMedication } from "../../src/api/meds";
+import { deleteMedication, updateMedication } from "../../src/api/meds";
 import { canDeleteMedication } from "../../src/api/tomas";
+import { uploadMedicationImage } from "../../src/lib/storage";
 import { PrimaryButton } from "../../src/components/primaryButton";
 import { Card } from "../../src/components/card";
 import { Colors } from "../../src/theme/colors";
@@ -25,6 +27,7 @@ export default function MedDetail() {
   const [med, setMed] = useState<Medication | null>(null);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [deleting, setDeleting] = useState(false);
+  const [updatingPhoto, setUpdatingPhoto] = useState(false);
 
   const isReadOnly = readonly === "1" || readonly === "true";
   const effectivePatientId = patientId;
@@ -108,22 +111,148 @@ async function handleDelete() {
   }
 }
 
+  async function updatePhotoFromUri(uri: string) {
+    const uid = auth.currentUser?.uid;
+    if (!uid || !med || updatingPhoto) return;
+
+    setUpdatingPhoto(true);
+    try {
+      const imageUrl = await uploadMedicationImage(uid, uri);
+      await updateMedication(med.id, { imageUrl });
+      setMed((prev) => (prev ? { ...prev, imageUrl } : prev));
+      Alert.alert("Listo", "Foto de medicación actualizada");
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo actualizar la foto");
+    } finally {
+      setUpdatingPhoto(false);
+    }
+  }
+
+  async function pickPhotoFromGallery() {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (perm.status !== "granted") {
+      Alert.alert("Permiso requerido", "Necesitamos acceso a tu galería para elegir la foto.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]?.uri) {
+      await updatePhotoFromUri(result.assets[0].uri);
+    }
+  }
+
+  async function takePhoto() {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (perm.status !== "granted") {
+      Alert.alert("Permiso requerido", "Necesitamos acceso a la cámara para tomar la foto.");
+      return;
+    }
+
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]?.uri) {
+        await updatePhotoFromUri(result.assets[0].uri);
+      }
+    } catch {
+      Alert.alert("No disponible", "No se pudo abrir la cámara en este dispositivo.");
+    }
+  }
+
+  async function removePhoto() {
+    if (!med || updatingPhoto) return;
+    setUpdatingPhoto(true);
+    try {
+      await updateMedication(med.id, { imageUrl: "" });
+      setMed((prev) => (prev ? { ...prev, imageUrl: "" } : prev));
+      Alert.alert("Listo", "Foto eliminada");
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo eliminar la foto");
+    } finally {
+      setUpdatingPhoto(false);
+    }
+  }
+
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       {med ? (
         <>
           <Card>
-            <Text style={styles.title}>{med.name}</Text>
-            {!!med.strength && <Text style={styles.meta}>{med.strength}</Text>}
-            {!!med.form && <Text style={styles.meta}>{med.form}</Text>}
-            {!!med.notes && <Text style={styles.notes}>{med.notes}</Text>}
+            <View style={styles.headerRow}>
+              {!!med.imageUrl ? (
+                <Image
+                  source={{ uri: med.imageUrl }}
+                  style={styles.medImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <View style={styles.medImagePlaceholder}>
+                  <Text style={styles.medImagePlaceholderText}>Sin foto</Text>
+                </View>
+              )}
+              <View style={styles.headerInfo}>
+                <Text style={styles.title}>{med.name}</Text>
+                {!!med.strength && <Text style={styles.meta}>{med.strength}</Text>}
+                {!!med.form && <Text style={styles.meta}>{med.form}</Text>}
+                {!!med.notes && <Text style={styles.notes}>{med.notes}</Text>}
+              </View>
+            </View>
+
+            {!isReadOnly && (
+              <View style={styles.photoActionsWrap}>
+                <Text style={styles.photoActionsTitle}>Foto de referencia</Text>
+                <View style={styles.photoActionsRow}>
+                  <TouchableOpacity
+                    onPress={pickPhotoFromGallery}
+                    disabled={updatingPhoto}
+                    style={[styles.actionChip, updatingPhoto && styles.actionChipDisabled]}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.actionChipText}>
+                      {updatingPhoto ? "Actualizando..." : "Galería"}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={takePhoto}
+                    disabled={updatingPhoto}
+                    style={[styles.actionChip, updatingPhoto && styles.actionChipDisabled]}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.actionChipText}>Cámara</Text>
+                  </TouchableOpacity>
+                </View>
+                {!!med.imageUrl && (
+                  <TouchableOpacity
+                    onPress={removePhoto}
+                    disabled={updatingPhoto}
+                    style={[styles.removePhotoBtn, updatingPhoto && styles.actionChipDisabled]}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.removePhotoText}>Quitar foto</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
           </Card>
 
           <Text style={styles.sectionTitle}>Planificaciones</Text>
 
           <FlatList
             data={schedules}
+            style={styles.scheduleList}
+            contentContainerStyle={styles.scheduleListContent}
+            scrollEnabled={false}
             keyExtractor={(i) => i.id}
             ListEmptyComponent={
               <Text style={styles.emptyText}>No hay planificaciones aún.</Text>
@@ -216,6 +345,37 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: Colors.text,
   },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  medImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 10,
+    backgroundColor: "#E5E7EB",
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  medImagePlaceholder: {
+    width: 96,
+    height: 96,
+    borderRadius: 10,
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  medImagePlaceholderText: {
+    color: Colors.muted,
+    fontWeight: "600",
+    fontSize: 12,
+  },
   meta: {
     color: Colors.muted,
     marginTop: 2,
@@ -224,11 +384,55 @@ const styles = StyleSheet.create({
     color: Colors.muted,
     marginTop: 6,
   },
+  photoActionsWrap: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  photoActionsTitle: {
+    color: Colors.text,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  photoActionsRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  actionChip: {
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  actionChipDisabled: {
+    opacity: 0.6,
+  },
+  actionChipText: {
+    color: Colors.text,
+    fontWeight: "600",
+  },
+  removePhotoBtn: {
+    marginTop: 8,
+    alignSelf: "flex-start",
+  },
+  removePhotoText: {
+    color: Colors.danger,
+    fontWeight: "700",
+  },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: Colors.text,
     marginTop: 4,
+  },
+  scheduleList: {
+    flexGrow: 0,
+  },
+  scheduleListContent: {
+    paddingBottom: 0,
   },
   emptyText: {
     color: Colors.muted,

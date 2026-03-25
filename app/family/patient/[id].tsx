@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { View, Text, FlatList, StyleSheet, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Href } from "expo-router";
@@ -92,9 +92,16 @@ export default function FamilyPatientDetailScreen() {
               })
             }
           >
-            <Text style={styles.cardTitle}>{item.name}</Text>
-            {!!item.strength && <Text style={styles.cardText}>{item.strength}</Text>}
-            {!!item.form && <Text style={styles.cardText}>{item.form}</Text>}
+            <View style={styles.medRow}>
+              {!!item.imageUrl && (
+                <Image source={{ uri: item.imageUrl }} style={styles.medThumb} />
+              )}
+              <View style={styles.medInfo}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                {!!item.strength && <Text style={styles.cardText}>{item.strength}</Text>}
+                {!!item.form && <Text style={styles.cardText}>{item.form}</Text>}
+              </View>
+            </View>
           </Card>
         )}
       />
@@ -128,5 +135,19 @@ const styles = StyleSheet.create({
   listContent: { paddingBottom: 8 },
   emptyText: { color: Colors.muted },
   cardTitle: { fontWeight: "700", color: Colors.text },
+  medRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  medInfo: {
+    flex: 1,
+  },
+  medThumb: {
+    width: 72,
+    height: 72,
+    borderRadius: 10,
+    backgroundColor: "#E5E7EB",
+  },
   cardText: { color: Colors.muted },
 });

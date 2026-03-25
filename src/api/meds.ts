@@ -4,6 +4,7 @@ import {
   serverTimestamp,
   deleteDoc,
   doc,
+  updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../lib/firebase";
 
@@ -12,6 +13,7 @@ type CreateMedicationInput = {
   form?: string;
   strength?: string;
   notes?: string;
+  imageUrl?: string;
 };
 
 export async function createMedication(
@@ -30,10 +32,22 @@ export async function createMedication(
     form: data.form ?? "",
     strength: data.strength ?? "",
     notes: data.notes ?? "",
+    imageUrl: data.imageUrl ?? "",
     createdAt: serverTimestamp(),
   });
 }
 
 export async function deleteMedication(medId: string) {
   await deleteDoc(doc(db, "medications", medId));
+}
+
+type UpdateMedicationInput = {
+  imageUrl?: string;
+};
+
+export async function updateMedication(
+  medId: string,
+  data: UpdateMedicationInput
+) {
+  await updateDoc(doc(db, "medications", medId), data as any);
 }

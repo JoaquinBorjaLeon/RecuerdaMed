@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isRole(role) {
+      return signedIn() && userDoc().data.role == role;
+    }
+
+    function isOwner(patientId) {
+      return signedIn() && request.auth.uid == patientId;
+    }
+
+    function isLinkedTo(patientId) {
+      return signedIn() &&
+        get(
+          /databases/$(database)/documents/careLinks/$(request.auth.uid + "_" + patientId)
+        ).data.status == "ACTIVE";
+    }
+
+    function medOwnerById(medId) {
+      return get(/databases/$(database)/documents/medications/$(medId)).data.patientId;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /careLinks/{careLinkId} {
+      allow read: if signedIn() &&
+        (
+          resource.data.patientId == request.auth.uid ||
+          resource.data.caregiverId == request.auth.uid ||
+          resource.data.caregiverEmail == request.auth.token.email
+        );
+
+      allow create: if signedIn() &&
+        (
+          request.resource.data.patientId == request.auth.uid ||
+          request.resource.data.caregiverId == request.auth.uid
+        );
+
+      allow update: if signedIn() &&
+        (
+          resource.data.patientId == request.auth.uid ||
+          resource.data.caregiverId == request.auth.uid ||
+          resource.data.caregiverEmail == request.auth.token.email
+        );
+    }
+
+    match /medications/{medId} {
+      allow read: if
+        isOwner(resource.data.patientId) ||
+        isLinkedTo(resource.data.patientId);
+
+      allow create: if
+        isOwner(request.resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(request.resource.data.patientId));
+
+      allow update: if
+        isOwner(resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId));
+
+      allow delete: if
+        isOwner(resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId));
+    }
+
+    match /schedules/{scheduleId} {
+      allow read: if
+        isOwner(resource.data.patientId) ||
+        isLinkedTo(resource.data.patientId);
+
+      allow create: if
+        isOwner(request.resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(request.resource.data.patientId));
+
+      allow update, delete: if
+        isOwner(resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId)) ||
+        isOwner(medOwnerById(resource.data.medId));
+    }
+
+    match /tomas/{tomaId} {
+      allow read: if
+        isOwner(resource.data.patientId) ||
+        isLinkedTo(resource.data.patientId);
+
+      allow create: if
+        isOwner(request.resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(request.resource.data.patientId));
+
+      allow update, delete: if
+        isOwner(resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId)) ||
+        isOwner(medOwnerById(resource.data.medId));
+    }
+  }
+}

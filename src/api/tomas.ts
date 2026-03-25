@@ -314,7 +314,7 @@ export async function generateTomasFromSchedule(
             },
           });
         }
-      } catch (e) {
+      } catch {
         // En web no está disponible; no bloqueamos la creación
       }
     }
