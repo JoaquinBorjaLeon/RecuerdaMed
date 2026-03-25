@@ -60,6 +60,7 @@ export default function EditSchedule() {
   const [endDate, setEndDate] = useState("");
   const [tol, setTol] = useState("30");
   const [locked, setLocked] = useState(false);
+  const [ownerPatientId, setOwnerPatientId] = useState<string | undefined>(patientId);
 
   const inputStyle = {
     borderWidth: 1,
@@ -95,6 +96,7 @@ export default function EditSchedule() {
           return;
         }
         const s = snap.data() as Schedule;
+        setOwnerPatientId(s.patientId ?? patientId);
         setPattern(s.pattern);
         setStartDate(s.startDate);
         setEndDate(s.endDate ?? "");
@@ -135,7 +137,7 @@ export default function EditSchedule() {
         goToMed();
       }
     })();
-  }, [sid, router]);
+  }, [sid, router, patientId]);
 
   async function save() {
     if (locked) {
@@ -229,7 +231,7 @@ export default function EditSchedule() {
     if (!confirmed) return;
 
     try {
-      await deleteScheduleAndTomas(String(sid), patientId);
+      await deleteScheduleAndTomas(String(sid), ownerPatientId);
       if (Platform.OS === "web") {
         window.alert("Planificación eliminada");
         goToMed();

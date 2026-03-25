@@ -2,6 +2,7 @@
 import {
   addDoc,
   collection,
+  getDoc,
   getDocs,
   onSnapshot,
   orderBy,
@@ -84,9 +85,22 @@ export async function deleteScheduleAndTomas(
   scheduleId: string,
   patientId?: string
 ) {
+  let effectivePatientId = patientId;
+
+  // In patient flows, route params may not include patientId; recover from schedule.
+  if (!effectivePatientId) {
+    const scheduleSnap = await getDoc(doc(db, "schedules", scheduleId));
+    if (scheduleSnap.exists()) {
+      const schedule = scheduleSnap.data() as Partial<Schedule>;
+      if (schedule.patientId) effectivePatientId = schedule.patientId;
+    }
+  }
+
   // 1) borrar tomas vinculadas
   const filters = [where("scheduleId", "==", scheduleId)];
-  if (patientId) filters.push(where("patientId", "==", patientId));
+  if (effectivePatientId) {
+    filters.push(where("patientId", "==", effectivePatientId));
+  }
   const q = query(collection(db, "tomas"), ...filters);
   const snap = await getDocs(q);
   for (const d of snap.docs) {
