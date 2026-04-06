@@ -50,9 +50,9 @@ export default function NewSchedule() {
   const [uid, setUid] = useState<string | null>(null);
 
   const [pattern, setPattern] = useState<SchedulePattern>("DAILY");
-  const [times, setTimes] = useState<string>("08:00,20:00");
-  const [selectedDow, setSelectedDow] = useState<number[]>([1, 2, 3, 4, 5]);
-  const [every, setEvery] = useState<string>("8");
+  const [times, setTimes] = useState<string>("");
+  const [selectedDow, setSelectedDow] = useState<number[]>([]);
+  const [every, setEvery] = useState<string>("");
   const [startDate, setStartDate] = useState<string>(() => {
     const d = new Date();
     const mm = String(d.getMonth() + 1).padStart(2, "0");
@@ -60,7 +60,7 @@ export default function NewSchedule() {
     return `${d.getFullYear()}-${mm}-${dd}`;
   });
   const [endDate, setEndDate] = useState<string>("");
-  const [tol, setTol] = useState<string>("30");
+  const [tol, setTol] = useState<string>("");
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
