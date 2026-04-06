@@ -10,14 +10,17 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
+    // Comprueba si el usuario autenticado tiene un rol específico
     function isRole(role) {
       return signedIn() && userDoc().data.role == role;
     }
 
+    // Comprueba si el usuario autenticado es el dueño del recurso
     function isOwner(patientId) {
       return signedIn() && request.auth.uid == patientId;
     }
 
+    // Comprueba si el usuario tiene un careLink activo con el paciente
     function isLinkedTo(patientId) {
       return signedIn() &&
         get(
@@ -25,6 +28,7 @@ service cloud.firestore {
         ).data.status == "ACTIVE";
     }
 
+    // Obtiene el patientId del medicamento referenciado
     function medOwnerById(medId) {
       return get(/databases/$(database)/documents/medications/$(medId)).data.patientId;
     }

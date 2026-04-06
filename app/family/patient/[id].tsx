@@ -14,6 +14,7 @@ import { Card } from "../../../src/components/card";
 import { PrimaryButton } from "../../../src/components/primaryButton";
 import { Colors } from "../../../src/theme/colors";
 
+/** Detalle de un paciente visto desde el familiar (solo lectura) */
 export default function FamilyPatientDetailScreen() {
   const router = useRouter();
   const { id: patientId } = useLocalSearchParams<{ id: string }>();
@@ -21,9 +22,6 @@ export default function FamilyPatientDetailScreen() {
   const [patient, setPatient] = useState<UserProfile | null>(null);
   const [meds, setMeds] = useState<Medication[]>([]);
 
-  /* =====================
-     AUTH + PROFILE
-  ====================== */
   useEffect(() => {
     if (!patientId) return;
 
@@ -40,9 +38,6 @@ export default function FamilyPatientDetailScreen() {
     return unsub;
   }, [patientId, router]);
 
-  /* =====================
-     MEDICATIONS LISTENER
-  ====================== */
   useEffect(() => {
     if (!patientId) return;
 

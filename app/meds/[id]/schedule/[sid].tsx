@@ -25,6 +25,7 @@ import { db } from "../../../../src/lib/firebase";
 import type { Schedule, SchedulePattern } from "../../../../src/types";
 import { deleteScheduleAndTomas } from "../../../../src/api/schedules";
 
+/** Parsea fecha en formato YYYY-MM-DD o DD/MM/YYYY a YYYY-MM-DD */
 function parseDate(input: string): string | null {
   const s = input.trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
@@ -37,6 +38,7 @@ function isValidTime(value: string) {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
 }
 
+/** Pantalla de edición/visualización de una planificación existente */
 export default function EditSchedule() {
   const { id, sid, readonly, patientId } = useLocalSearchParams<{
     id: string;
@@ -201,7 +203,7 @@ export default function EditSchedule() {
     }
 
     try {
-      // quitar nulls para no “ensuciar” el doc
+      // Eliminar campos null para no sobrescribir datos existentes
       Object.keys(patch).forEach((k) => patch[k] === null && delete patch[k]);
 
       await updateDoc(doc(db, "schedules", String(sid)), patch);

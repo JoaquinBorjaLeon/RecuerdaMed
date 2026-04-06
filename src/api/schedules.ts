@@ -1,4 +1,3 @@
-// src/api/schedules.ts
 import {
   addDoc,
   collection,
@@ -17,27 +16,24 @@ import { db } from "../lib/firebase";
 import type { Schedule } from "../types";
 import { generateTomasFromSchedule } from "./tomas";
 
+/** Crea una planificación y genera automáticamente las tomas para los próximos 7 días */
 export async function createSchedule(
   input: Omit<Schedule, "id" | "createdAt">
 ) {
-  // 1️⃣ Crear la planificación
   const ref = await addDoc(collection(db, "schedules"), {
     ...input,
     createdAt: serverTimestamp(),
   });
 
-  // 2️⃣ Generar tomas automáticamente (H4.3 + H4.4)
   await generateTomasFromSchedule(
-    {
-      id: ref.id,
-      ...input,
-    } as Schedule,
-    7 // días hacia delante
+    { id: ref.id, ...input } as Schedule,
+    7
   );
 
   return ref.id;
 }
 
+/** Obtiene las planificaciones de una medicación (one-shot) */
 export async function listSchedulesByMed(
   medId: string,
   patientId?: string
@@ -56,7 +52,7 @@ export async function listSchedulesByMed(
   );
 }
 
-// Listener en tiempo real
+/** Listener en tiempo real de las planificaciones de una medicación */
 export function listenSchedulesByMed(
   medId: string,
   cb: (items: Schedule[]) => void,
@@ -80,14 +76,14 @@ export function listenSchedulesByMed(
   });
 }
 
-// Eliminar planificación y sus tomas asociadas
+/** Elimina una planificación y todas sus tomas asociadas */
 export async function deleteScheduleAndTomas(
   scheduleId: string,
   patientId?: string
 ) {
   let effectivePatientId = patientId;
 
-  // In patient flows, route params may not include patientId; recover from schedule.
+  // Si no viene patientId (flujo de paciente), lo recuperamos del schedule
   if (!effectivePatientId) {
     const scheduleSnap = await getDoc(doc(db, "schedules", scheduleId));
     if (scheduleSnap.exists()) {
@@ -96,7 +92,7 @@ export async function deleteScheduleAndTomas(
     }
   }
 
-  // 1) borrar tomas vinculadas
+  // Borrar tomas vinculadas
   const filters = [where("scheduleId", "==", scheduleId)];
   if (effectivePatientId) {
     filters.push(where("patientId", "==", effectivePatientId));
@@ -107,6 +103,6 @@ export async function deleteScheduleAndTomas(
     await deleteDoc(doc(db, "tomas", d.id));
   }
 
-  // 2) borrar planificación
+  // Borrar la planificación
   await deleteDoc(doc(db, "schedules", scheduleId));
 }

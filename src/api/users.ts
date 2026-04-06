@@ -1,4 +1,3 @@
-// src/api/users.ts
 import {
   doc,
   setDoc,
@@ -11,14 +10,8 @@ import {
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
-/**
- * Roles admitidos en la app
- */
 export type UserRole = "PATIENT" | "CAREGIVER" | "FAMILY";
 
-/**
- * Modelo de usuario en Firestore
- */
 export type UserProfile = {
   id: string;
   fullName: string;
@@ -28,12 +21,7 @@ export type UserProfile = {
   createdAt?: any;
 };
 
-/**
- * Crea o actualiza el perfil del usuario
- * Se llama:
- * - tras el registro
- * - tras el primer login
- */
+/** Crea o actualiza el perfil del usuario (registro o primer login) */
 export async function upsertUserProfile(input: {
   uid: string;
   fullName: string;
@@ -56,9 +44,7 @@ export async function upsertUserProfile(input: {
   );
 }
 
-/**
- * Actualiza campos editables del perfil
- */
+/** Actualiza campos editables del perfil (nombre, foto) */
 export async function updateUserProfile(uid: string, patch: Partial<UserProfile>) {
   const data: Record<string, any> = {};
   if (patch.fullName !== undefined) data.fullName = patch.fullName;
@@ -68,10 +54,7 @@ export async function updateUserProfile(uid: string, patch: Partial<UserProfile>
   await setDoc(doc(db, "users", uid), data, { merge: true });
 }
 
-/**
- * Obtiene un usuario por su ID
- * Usado para mostrar nombre/email del paciente en invitaciones
- */
+/** Obtiene un usuario por su UID */
 export async function getUserById(
   uid: string
 ): Promise<UserProfile | null> {
@@ -86,9 +69,7 @@ export async function getUserById(
   };
 }
 
-/**
- * Obtiene un usuario por email
- */
+/** Busca un usuario por email (normalizado a minúsculas) */
 export async function getUserByEmail(
   email: string
 ): Promise<UserProfile | null> {

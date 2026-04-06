@@ -11,6 +11,7 @@ import { uploadMedicationImage } from "../../src/lib/storage";
 import { Colors } from "../../src/theme/colors";
 import { PrimaryButton } from "../../src/components/primaryButton";
 
+/** Formulario para crear una nueva medicación (paciente o cuidador) */
 export default function NewMedication() {
   const router = useRouter();
   const params = useLocalSearchParams<{ patientId?: string }>();
@@ -23,7 +24,6 @@ export default function NewMedication() {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // 🔐 Auth
   useEffect(() => {
     return onAuthStateChanged(auth, (u) => {
       if (!u) {
@@ -75,6 +75,7 @@ export default function NewMedication() {
     }
   }
 
+  /** Valida, sube imagen si hay, crea la medicación y redirige */
   async function save() {
     try {
       if (saving) return;
@@ -82,7 +83,7 @@ export default function NewMedication() {
       if (!userId) throw new Error("Usuario no autenticado");
       if (!name.trim()) throw new Error("El nombre es obligatorio");
 
-      // ✅ CLAVE: si no viene patientId → es el propio paciente
+      // Si no viene patientId, el paciente es el propio usuario
       const realPatientId = params.patientId ?? userId;
       let imageUrl: string | undefined;
 
@@ -107,15 +108,12 @@ export default function NewMedication() {
 
       Alert.alert("OK", "Medicación creada");
 
-      // 🔁 Redirección correcta
       if (params.patientId) {
-        // cuidador
         router.replace({
           pathname: "/care/patient/[id]",
           params: { id: params.patientId },
         });
       } else {
-        // paciente
         router.replace("/home");
       }
     } catch (e: any) {

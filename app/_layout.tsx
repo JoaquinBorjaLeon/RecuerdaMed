@@ -9,6 +9,7 @@ import { SpeedInsights } from "@vercel/speed-insights/react";
 export default function RootLayout() {
   const router = useRouter();
 
+  // Deep linking desde notificaciones push (solo nativo)
   useEffect(() => {
     if (Platform.OS === "web") return;
 
@@ -44,9 +45,7 @@ export default function RootLayout() {
           <SpeedInsights />
         </>
       )}
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* index.tsx será "/", home.tsx será "/home" */}
-      </Stack>
+      <Stack screenOptions={{ headerShown: false }} />
     </SafeAreaProvider>
   );
 }

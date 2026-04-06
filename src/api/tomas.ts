@@ -1,4 +1,3 @@
-// src/api/tomas.ts
 import {
   collection,
   addDoc,
@@ -23,30 +22,39 @@ import { getPushTokensByUserIds } from "./pushTokens";
 import { sendPushToUsers } from "./notifications";
 import { getUserById } from "./users";
 
-// -------------------- helpers --------------------
+// ── Helpers de fecha ──
+
 function startOfDay(d: Date) {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
   return x;
 }
+
 function endOfDay(d: Date) {
   const x = new Date(d);
   x.setHours(23, 59, 59, 999);
   return x;
 }
+
+/** Parsea "YYYY-MM-DD" a Date local */
 function parseYMD(ymd: string): Date {
   const [y, m, d] = ymd.split("-").map(Number);
   return new Date(y, m - 1, d, 0, 0, 0, 0);
 }
+
 function iso(d: Date) {
   return d.toISOString();
 }
+
+/** Convierte el day de JS (0=Dom) al ISO 8601 (1=Lun, 7=Dom) */
 function jsDayToISOdow(jsDay: number) {
   return ((jsDay + 6) % 7) + 1;
 }
 
+/** Minutos antes de la expiración para enviar aviso */
 const EXPIRY_WARNING_MINUTES = 5;
 
+/** Obtiene los push tokens del paciente + sus cuidadores + sus familiares */
 async function getAllLinkedTokens(patientId: string) {
   const [caregiverIds, familyIds] = await Promise.all([
     getActiveCaregivers(patientId),
@@ -56,6 +64,7 @@ async function getAllLinkedTokens(patientId: string) {
   return getPushTokensByUserIds(allIds);
 }
 
+/** Obtiene los push tokens de cuidadores + familiares (sin el paciente) */
 async function getLinkedCaregiverAndFamilyTokens(patientId: string) {
   const [caregiverIds, familyIds] = await Promise.all([
     getActiveCaregivers(patientId),
@@ -65,6 +74,7 @@ async function getLinkedCaregiverAndFamilyTokens(patientId: string) {
   return getPushTokensByUserIds(allIds);
 }
 
+/** Construye nombre del medicamento y paciente para los mensajes push */
 async function buildTomaMessage(toma: Toma) {
   let medName = "medicación";
   try {
@@ -84,7 +94,9 @@ async function buildTomaMessage(toma: Toma) {
   return { medName, patientName };
 }
 
-// -------------------- Firestore ops --------------------
+// ── Operaciones Firestore ──
+
+/** Inserta una toma en Firestore */
 export async function createToma(data: Omit<Toma, "id" | "createdAt">) {
   await addDoc(collection(db, "tomas"), {
     ...data,
@@ -92,6 +104,7 @@ export async function createToma(data: Omit<Toma, "id" | "createdAt">) {
   });
 }
 
+/** Comprueba si ya existe una toma con el mismo dedupeKey para evitar duplicados */
 async function tomaExistsByDedupeKey(patientId: string, dedupeKey: string) {
   const q = query(
     collection(db, "tomas"),
@@ -103,6 +116,7 @@ async function tomaExistsByDedupeKey(patientId: string, dedupeKey: string) {
   return !snap.empty;
 }
 
+/** Listener en tiempo real de las tomas de un paciente. Actualiza estados automáticamente. */
 export function listenUpcomingTomas(
   patientId: string,
   cb: (items: Toma[]) => void
@@ -130,6 +144,7 @@ export function listenUpcomingTomas(
   });
 }
 
+/** Confirma una toma y notifica a cuidadores/familiares */
 export async function confirmToma(tomaId: string, toma: Toma) {
   await updateDoc(doc(db, "tomas", tomaId), {
     status: "CONFIRMED",
@@ -156,10 +171,15 @@ export async function confirmToma(tomaId: string, toma: Toma) {
   });
 }
 
+/**
+ * Actualiza el estado de una toma según la hora actual:
+ * PLANNED → DUE (dentro de ventana) → EXPIRED (pasada la ventana).
+ * Envía notificaciones de aviso cercano a expiración y de expiración.
+ */
 export async function updateTomaStatusIfNeeded(toma: Toma) {
   const now = new Date().toISOString();
 
-  // aviso de caducidad cercana
+  // Aviso de caducidad cercana (5 min antes de windowEnd)
   if (!toma.warningNotifiedAt && toma.status !== "CONFIRMED") {
     const warnAt = new Date(new Date(toma.windowEnd).getTime() - EXPIRY_WARNING_MINUTES * 60000);
     if (new Date(now) >= warnAt && new Date(now) < new Date(toma.windowEnd)) {
@@ -190,6 +210,7 @@ export async function updateTomaStatusIfNeeded(toma: Toma) {
     await updateDoc(doc(db, "tomas", toma.id), { status: nextStatus });
   }
 
+  // Notificación de expiración a todos los vinculados
   if (nextStatus === "EXPIRED" && !toma.expiredNotifiedAt) {
     const tokens = await getAllLinkedTokens(toma.patientId);
     const { medName, patientName } = await buildTomaMessage(toma);
@@ -204,6 +225,11 @@ export async function updateTomaStatusIfNeeded(toma: Toma) {
   }
 }
 
+/**
+ * Genera tomas futuras a partir de una planificación.
+ * Soporta patrones DAILY, DOW (días de la semana) y EVERY_X_HOURS.
+ * Usa dedupeKey para evitar duplicados.
+ */
 export async function generateTomasFromSchedule(
   schedule: Schedule,
   daysAhead: number = 7
@@ -211,6 +237,7 @@ export async function generateTomasFromSchedule(
   if (!schedule.patientId || !schedule.medId || !schedule.id) return;
   if (!schedule.startDate) return;
 
+  // Snapshot de la medicación para desnormalizar en cada toma
   let medSnapshot: { name?: string; strength?: string; form?: string } | null = null;
   try {
     const medSnap = await getDoc(doc(db, "medications", schedule.medId));
@@ -243,6 +270,7 @@ export async function generateTomasFromSchedule(
 
   if (rangeEnd.getTime() < rangeStart.getTime()) return;
 
+  /** Crea una toma individual y programa sus notificaciones locales */
   const createOneToma = async (plannedAt: Date) => {
     if (plannedAt < rangeStart || plannedAt > rangeEnd) return;
 
@@ -254,6 +282,7 @@ export async function generateTomasFromSchedule(
     let notificationId: string | undefined;
     if (Platform.OS !== "web") {
       try {
+        // Notificación principal: "Es hora de tomar tu medicación"
         notificationId = await Notifications.scheduleNotificationAsync({
           content: {
             title: "RecuerdaMed",
@@ -271,7 +300,7 @@ export async function generateTomasFromSchedule(
           },
         });
 
-        // Aviso de caducidad cercana
+        // Aviso X min antes de expirar
         const warnAt = new Date(
           plannedAt.getTime() + tolerance * 60000 - EXPIRY_WARNING_MINUTES * 60000
         );
@@ -294,7 +323,7 @@ export async function generateTomasFromSchedule(
           });
         }
 
-        // Aviso de caducidad
+        // Aviso de expiración
         const expiredAt = new Date(plannedAt.getTime() + tolerance * 60000);
         if (expiredAt > new Date()) {
           await Notifications.scheduleNotificationAsync({
@@ -315,7 +344,7 @@ export async function generateTomasFromSchedule(
           });
         }
       } catch {
-        // En web no está disponible; no bloqueamos la creación
+        // En web las notificaciones locales no están disponibles
       }
     }
 
@@ -344,6 +373,7 @@ export async function generateTomasFromSchedule(
     await createToma(tomaPayload);
   };
 
+  // Generar tomas según el patrón
   if (schedule.pattern === "DAILY" || schedule.pattern === "DOW") {
     const times = schedule.times ?? [];
     const allowedDow = schedule.pattern === "DOW" ? schedule.dow ?? [] : null;
@@ -376,13 +406,14 @@ export async function generateTomasFromSchedule(
   }
 }
 
+/**
+ * Comprueba si se puede eliminar una medicación.
+ * Devuelve false si existen tomas futuras (fail-safe).
+ */
 export async function canDeleteMedication(
   medicationId: string,
   patientId?: string
 ): Promise<boolean> {
-  // Bloqueamos borrado si existe *cualquier* toma futura del medicamento,
-  // independientemente del status (PLANNED o DUE principalmente).
-  // Usamos limit(1) para que sea rápido.
   const nowIso = new Date().toISOString();
 
   try {
@@ -399,9 +430,7 @@ export async function canDeleteMedication(
     const snap = await getDocs(q);
     return snap.empty;
   } catch (e: any) {
-    // Si por lo que sea la query falla, NO permitimos borrar (fail-safe)
     console.warn("canDeleteMedication error:", e?.code, e?.message, e);
     return false;
   }
 }
-

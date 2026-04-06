@@ -25,10 +25,7 @@ export type CareLink = {
   removedAt?: any;
 };
 
-/**
- * Paciente invita a cuidador
- * ID = caregiverEmail (temporal, hasta aceptar)
- */
+/** Crea una invitación de paciente a cuidador/familiar (estado PENDING) */
 export async function inviteCaregiver(
   patientId: string,
   caregiverEmail: string
@@ -46,9 +43,7 @@ export async function inviteCaregiver(
   });
 }
 
-/**
- * Invitaciones pendientes por email
- */
+/** Obtiene las invitaciones pendientes dirigidas a un email */
 export async function getPendingInvitesByEmail(email: string) {
   const q = query(
     collection(db, "careLinks"),
@@ -63,8 +58,8 @@ export async function getPendingInvitesByEmail(email: string) {
 }
 
 /**
- * Aceptar invitación
- * ⚠️ Se reescribe el documento con ID determinista
+ * Acepta una invitación: crea un nuevo documento con ID determinista
+ * (caregiverId_patientId) y marca el antiguo como REMOVED.
  */
 export async function acceptInvite(
   oldCareLinkId: string,
@@ -94,9 +89,7 @@ export async function acceptInvite(
   await updateDoc(oldRef, { status: "REMOVED" });
 }
 
-/**
- * Rechazar invitación
- */
+/** Rechaza una invitación */
 export async function rejectInvite(careLinkId: string) {
   await updateDoc(doc(db, "careLinks", careLinkId), {
     status: "REJECTED",
@@ -105,9 +98,8 @@ export async function rejectInvite(careLinkId: string) {
 }
 
 /**
- * Eliminar relación paciente–cuidador
- * - Si pasas caregiverId + patientId: usa ID determinista
- * - Si pasas un único linkId: lo usa directamente
+ * Elimina una relación paciente–cuidador.
+ * Acepta (caregiverId, patientId) o un linkId directo.
  */
 export async function removeCareLink(
   caregiverIdOrLinkId: string,
@@ -123,9 +115,7 @@ export async function removeCareLink(
   });
 }
 
-/**
- * Cuidadores activos de un paciente
- */
+/** Obtiene los cuidadores/familiares activos de un paciente con su perfil */
 export async function getActiveCareLinksForPatient(
   patientId: string
 ): Promise<{ linkId: string; caregiver: UserProfile }[]> {
@@ -153,9 +143,7 @@ export async function getActiveCareLinksForPatient(
   }[];
 }
 
-/**
- * Pacientes activos de un cuidador
- */
+/** Obtiene los pacientes asignados a un cuidador */
 export async function getPatientsForCaregiver(
   caregiverId: string
 ): Promise<UserProfile[]> {
@@ -173,10 +161,7 @@ export async function getPatientsForCaregiver(
   return patients.filter(Boolean) as UserProfile[];
 }
 
-/**
- * IDs de cuidadores activos de un paciente
- * (para notificaciones y permisos)
- */
+/** Devuelve los IDs de cuidadores activos de un paciente (para notificaciones) */
 export async function getActiveCaregivers(
   patientId: string
 ): Promise<string[]> {
