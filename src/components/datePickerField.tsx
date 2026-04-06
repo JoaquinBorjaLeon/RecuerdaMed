@@ -7,6 +7,7 @@ type Props = {
   onChange: (ymd: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  clearable?: boolean;     // Muestra botón para borrar la fecha seleccionada
 };
 
 /**
@@ -14,7 +15,13 @@ type Props = {
  * - En web: usa <input type="date"> nativo del navegador.
  * - En nativo: muestra un botón que abre el DateTimePicker del sistema.
  */
-export function DatePickerField({ value, onChange, placeholder = "Seleccionar fecha", disabled = false }: Props) {
+export function DatePickerField({
+  value,
+  onChange,
+  placeholder = "Seleccionar fecha",
+  disabled = false,
+  clearable = false,
+}: Props) {
   const [showPicker, setShowPicker] = useState(false);
 
   /** Convierte "YYYY-MM-DD" a un Date local */
@@ -39,30 +46,54 @@ export function DatePickerField({ value, onChange, placeholder = "Seleccionar fe
     return `${d}/${m}/${y}`;
   }
 
+  /** Botón para borrar la fecha seleccionada */
+  function renderClearButton() {
+    if (!clearable || !value || disabled) return null;
+    return (
+      <Pressable
+        onPress={() => onChange("")}
+        style={styles.clearButton}
+        hitSlop={8}
+      >
+        <Text style={styles.clearButtonText}>✕</Text>
+      </Pressable>
+    );
+  }
+
   // En web usamos <input type="date"> que da un calendario nativo
   if (Platform.OS === "web") {
     return (
-      <View style={styles.container}>
-        <input
-          type="date"
-          value={value || ""}
-          onChange={(e: any) => onChange(e.target.value)}
-          disabled={disabled}
-          style={{
-            borderWidth: 1,
-            borderColor: Colors.border,
-            borderRadius: 10,
-            padding: 12,
-            color: Colors.text,
-            backgroundColor: Colors.card,
-            fontSize: 15,
-            fontFamily: "inherit",
-            width: "100%",
-            boxSizing: "border-box" as any,
-            borderStyle: "solid",
-            opacity: disabled ? 0.6 : 1,
-          }}
-        />
+      <View style={styles.webRow}>
+        <View style={styles.webInputWrap}>
+          <input
+            type="date"
+            value={value || ""}
+            onChange={(e: any) => onChange(e.target.value)}
+            disabled={disabled}
+            style={{
+              border: `1px solid ${Colors.border}`,
+              borderRadius: 10,
+              padding: 12,
+              color: value ? Colors.text : Colors.muted,
+              backgroundColor: Colors.card,
+              fontSize: 15,
+              fontFamily: "inherit",
+              width: "100%",
+              boxSizing: "border-box" as any,
+              opacity: disabled ? 0.6 : 1,
+              WebkitAppearance: "none" as any,
+              appearance: "none" as any,
+            }}
+          />
+        </View>
+        {clearable && !!value && !disabled && (
+          <Pressable
+            onPress={() => onChange("")}
+            style={styles.webClearButton}
+          >
+            <Text style={styles.webClearText}>Borrar</Text>
+          </Pressable>
+        )}
       </View>
     );
   }
@@ -72,15 +103,19 @@ export function DatePickerField({ value, onChange, placeholder = "Seleccionar fe
 
   return (
     <View style={styles.container}>
-      <Pressable
-        onPress={() => !disabled && setShowPicker(true)}
-        style={[styles.button, disabled && styles.buttonDisabled]}
-      >
-        <Text style={[styles.buttonText, !value && styles.placeholderText]}>
-          {value ? formatDisplay(value) : placeholder}
-        </Text>
-        <Text style={styles.calendarIcon}>📅</Text>
-      </Pressable>
+      <View style={styles.nativeRow}>
+        <Pressable
+          onPress={() => !disabled && setShowPicker(true)}
+          style={[styles.button, disabled && styles.buttonDisabled, { flex: 1 }]}
+        >
+          <Text style={[styles.buttonText, !value && styles.placeholderText]}>
+            {value ? formatDisplay(value) : placeholder}
+          </Text>
+          <Text style={styles.calendarIcon}>📅</Text>
+        </Pressable>
+
+        {renderClearButton()}
+      </View>
 
       {showPicker && (
         <DateTimePicker
@@ -104,6 +139,12 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
   },
+  // — Nativo —
+  nativeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   button: {
     flexDirection: "row",
     alignItems: "center",
@@ -126,5 +167,39 @@ const styles = StyleSheet.create({
   },
   calendarIcon: {
     fontSize: 18,
+  },
+  clearButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.danger,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  clearButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  // — Web —
+  webRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    width: "100%",
+  },
+  webInputWrap: {
+    flex: 1,
+  },
+  webClearButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: "#FEE2E2",
+  },
+  webClearText: {
+    color: Colors.danger,
+    fontWeight: "600",
+    fontSize: 14,
   },
 });

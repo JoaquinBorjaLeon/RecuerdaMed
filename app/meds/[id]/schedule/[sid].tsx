@@ -397,6 +397,7 @@ export default function EditSchedule() {
             onChange={setEndDate}
             placeholder="Sin fecha de fin"
             disabled={disabled}
+            clearable
           />
 
           <Text style={[styles.label, { marginTop: 12 }]}>

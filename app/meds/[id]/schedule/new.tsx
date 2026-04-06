@@ -301,6 +301,7 @@ export default function NewSchedule() {
             value={endDate}
             onChange={setEndDate}
             placeholder="Sin fecha de fin"
+            clearable
           />
 
           <Text style={[styles.label, { marginTop: 12 }]}>
