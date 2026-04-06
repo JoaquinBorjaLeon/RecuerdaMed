@@ -5,7 +5,7 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    // Same ownership model as profile avatar uploads.
+    // Cada usuario puede escribir solo en su propio directorio
     match /users/{uid}/{allPaths=**} {
       allow read: if signedIn();
       allow write: if signedIn() && request.auth.uid == uid;

@@ -1,4 +1,3 @@
-// app/tomas.tsx
 import { useEffect, useState } from "react";
 import { View, Text, FlatList, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,6 +15,7 @@ import { Card } from "../src/components/card";
 import { PrimaryButton } from "../src/components/primaryButton";
 import { Colors } from "../src/theme/colors";
 
+/** Formatea una fecha ISO a dd/mm HH:mm */
 function fmt(iso: string) {
   const d = new Date(iso);
   return d.toLocaleString("es-ES", {
@@ -26,6 +26,10 @@ function fmt(iso: string) {
   });
 }
 
+/**
+ * Pantalla de tomas. Muestra las tomas programadas de un paciente.
+ * Si recibe patientId, muestra las de otro paciente (vista cuidador/familiar).
+ */
 export default function TomasScreen() {
   const router = useRouter();
   const { patientId, tomaId } = useLocalSearchParams<{ patientId?: string; tomaId?: string }>();
@@ -52,6 +56,7 @@ export default function TomasScreen() {
 
       const targetPatientId = patientId ?? u.uid;
       unsubTomas = listenUpcomingTomas(String(targetPatientId), (items) => {
+        // Si viene un tomaId específico (desde notificación), priorizarlo arriba
         if (tomaId) {
           const selected = items.find((t) => t.id === tomaId);
           const rest = items.filter((t) => t.id !== tomaId);
@@ -68,6 +73,7 @@ export default function TomasScreen() {
     };
   }, [router, patientId, tomaId]);
 
+  // Carga perezosa de datos de medicación para las tomas
   useEffect(() => {
     let cancelled = false;
 
@@ -108,6 +114,7 @@ export default function TomasScreen() {
     };
   }, [tomas, medsById]);
 
+  // Backfill: actualiza tomas sin snapshot de medicación (migración de datos)
   useEffect(() => {
     const missing = tomas.filter(
       (t) =>
@@ -129,16 +136,13 @@ export default function TomasScreen() {
         if (!Object.keys(patch).length) return Promise.resolve();
         return updateDoc(doc(db, "tomas", t.id), patch);
       })
-    ).catch(() => {
-      // no bloqueamos la UI si falla el backfill
-    });
+    ).catch(() => {});
   }, [tomas, medsById]);
 
   async function handleConfirm(toma: Toma) {
     if (patientId && userRole !== "CAREGIVER") return;
     try {
       await confirmToma(toma.id, toma);
-      // refresco automático por onSnapshot
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "No se pudo confirmar la toma");
     }

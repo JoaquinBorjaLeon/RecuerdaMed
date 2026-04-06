@@ -1,4 +1,3 @@
-// app/home.tsx
 import { useEffect, useRef, useState } from "react";
 import { View, Text, FlatList, StyleSheet, Platform, Image, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -25,6 +24,12 @@ import { Card } from "../src/components/card";
 import { PrimaryButton } from "../src/components/primaryButton";
 import { Colors } from "../src/theme/colors";
 
+/**
+ * Pantalla principal. Muestra contenido diferente según el rol:
+ * - PATIENT: lista de medicaciones con acciones rápidas
+ * - CAREGIVER: panel con acceso a pacientes e invitaciones
+ * - FAMILY: panel con acceso a familiares e invitaciones
+ */
 export default function Home() {
   const router = useRouter();
 
@@ -49,13 +54,12 @@ export default function Home() {
         return;
       }
 
-      // 🔐 Perfil
       const profile = await getUserById(u.uid);
       if (!profile) return;
 
       setUser(profile);
 
-      // 🔔 Push notifications (solo nativo)
+      // Registrar push token en nativo
       if (!notificationsReady && Platform.OS !== "web") {
         try {
           const token = await registerForPushNotifications();
@@ -66,7 +70,7 @@ export default function Home() {
         }
       }
 
-      // 👤 SOLO paciente escucha sus medicaciones
+      // Solo el paciente escucha sus medicaciones en tiempo real
       if (profile.role === "PATIENT") {
         const q = query(
           collection(db, "medications"),
@@ -90,8 +94,8 @@ export default function Home() {
     };
   }, [router, notificationsReady]);
 
+  /** Cierra sesión desuscribiendo primero los listeners para evitar permission-denied */
   async function handleLogout() {
-    // Desuscribir listeners ANTES de cerrar sesión para evitar permission-denied
     if (unsubMedsRef.current) {
       unsubMedsRef.current();
       unsubMedsRef.current = null;
@@ -104,6 +108,7 @@ export default function Home() {
     router.replace("/");
   }
 
+  /** Extrae las iniciales del nombre (máximo 2 letras) */
   function getInitials(name?: string | null) {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/);
@@ -126,9 +131,7 @@ export default function Home() {
 
   if (!user) return null;
 
-  /* =========================
-     🧑‍⚕️ HOME CUIDADOR
-     ========================= */
+  // Home del cuidador
   if (user.role === "CAREGIVER") {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
@@ -162,9 +165,7 @@ export default function Home() {
     );
   }
 
-  /* =========================
-     👪 HOME FAMILIAR
-     ========================= */
+  // Home del familiar
   if (user.role === "FAMILY") {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
@@ -198,9 +199,7 @@ export default function Home() {
     );
   }
 
-  /* =========================
-     👤 HOME PACIENTE
-     ========================= */
+  // Home del paciente
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       <FlatList

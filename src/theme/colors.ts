@@ -2,6 +2,7 @@ import { Appearance } from "react-native";
 
 const scheme = Appearance.getColorScheme();
 
+/** Paleta de colores adaptada al tema del sistema (light/dark) */
 export const Colors = {
   background: scheme === "dark" ? "#000000" : "#FFFFFF",
   card: scheme === "dark" ? "#111827" : "#F9FAFB",

@@ -1,5 +1,5 @@
 export type Patient = {
-  id: string;                 // uid del usuario
+  id: string;
   fullName?: string | null;
   timezone: string;
   locale: string;
@@ -8,29 +8,29 @@ export type Patient = {
 
 export type Medication = {
   id: string;
-  patientId: string;          // uid
+  patientId: string;
   name: string;
-  form?: string;              // comprimido, jarabe...
-  strength?: string;          // 500 mg...
+  form?: string;
+  strength?: string;
   notes?: string;
   imageUrl?: string;
   createdAt: any;
-  createdBy?: string;          
+  createdBy?: string;
 };
 
-export type SchedulePattern = 'DAILY' | 'DOW' | 'EVERY_X_HOURS';
+export type SchedulePattern = "DAILY" | "DOW" | "EVERY_X_HOURS";
 
 export type Schedule = {
   id: string;
-  medId: string;                 // referencia a medications/{medId}
-  patientId: string;             // uid del usuario (para filtros/futuro)
-  pattern: SchedulePattern;      // DAILY | DOW | EVERY_X_HOURS
-  times?: string[];              // ["08:00","20:00"] (HH:mm) si DAILY o DOW
-  dow?: number[];                // 1..7 (1=Lun ... 7=Dom) si DOW
-  everyXHours?: number;          // si EVERY_X_HOURS (ej. 8)
-  startDate: string;             // "YYYY-MM-DD"
-  endDate?: string | null;       // opcional
-  toleranceMinutes: number;      // p.ej. 30
+  medId: string;
+  patientId: string;
+  pattern: SchedulePattern;
+  times?: string[];         // ["08:00","20:00"] (HH:mm) — para DAILY y DOW
+  dow?: number[];            // 1..7 (1=Lun, 7=Dom) — solo para DOW
+  everyXHours?: number;      // solo para EVERY_X_HOURS
+  startDate: string;         // "YYYY-MM-DD"
+  endDate?: string | null;
+  toleranceMinutes: number;
   createdAt: any;
 };
 
@@ -42,28 +42,27 @@ export type Toma = {
   medId: string;
   scheduleId: string;
 
-  // snapshot de medicación para historial
+  // Snapshot de la medicación para mantener historial si se edita el medicamento
   medName?: string;
   medStrength?: string;
   medForm?: string;
 
-  plannedAt: string;      // ISO
-  windowStart: string;    // ISO
-  windowEnd: string;      // ISO
+  plannedAt: string;      // ISO 8601
+  windowStart: string;    // ISO 8601
+  windowEnd: string;      // ISO 8601
 
   status: TomaStatus;
 
   notificationId?: string | null;
 
-  // notificaciones auxiliares
+  // Timestamps de notificaciones enviadas (evita reenvíos)
   warningNotifiedAt?: string | null;
   expiredNotifiedAt?: string | null;
   confirmedNotifiedAt?: string | null;
 
-  // ✅ clave anti-duplicados (muy importante)
+  // Clave única para evitar tomas duplicadas (scheduleId + plannedAt)
   dedupeKey: string;
 
   createdAt?: any;
   confirmedAt?: string;
 };
-

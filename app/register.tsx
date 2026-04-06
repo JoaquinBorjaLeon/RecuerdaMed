@@ -1,4 +1,3 @@
-// app/register.tsx
 import { useState } from "react";
 import {
   View,
@@ -27,6 +26,7 @@ import { Colors } from "../src/theme/colors";
 
 type Role = "PATIENT" | "CAREGIVER" | "FAMILY";
 
+/** Pantalla de registro con selección de rol y avatar */
 export default function RegisterScreen() {
   const router = useRouter();
 
@@ -38,6 +38,7 @@ export default function RegisterScreen() {
   const [localUri, setLocalUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  /** Abre el selector de imágenes de la galería */
   async function pickImage() {
     if (Platform.OS !== "web") {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -75,6 +76,7 @@ export default function RegisterScreen() {
     return true;
   }
 
+  /** Crea la cuenta en Firebase Auth y el perfil en Firestore */
   async function handleRegister() {
     if (!validate()) return;
 

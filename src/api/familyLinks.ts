@@ -25,10 +25,7 @@ export type FamilyLink = {
   removedAt?: any;
 };
 
-/**
- * Paciente invita a familiar
- * ID = familyEmail (temporal, hasta aceptar)
- */
+/** Crea una invitación de paciente a familiar (estado PENDING) */
 export async function inviteFamily(patientId: string, familyEmail: string) {
   const email = familyEmail.trim().toLowerCase();
   if (!email) throw new Error("Email inválido");
@@ -43,9 +40,7 @@ export async function inviteFamily(patientId: string, familyEmail: string) {
   });
 }
 
-/**
- * Invitaciones pendientes por email
- */
+/** Obtiene las invitaciones familiares pendientes dirigidas a un email */
 export async function getPendingFamilyInvitesByEmail(email: string) {
   const q = query(
     collection(db, "familyLinks"),
@@ -60,8 +55,8 @@ export async function getPendingFamilyInvitesByEmail(email: string) {
 }
 
 /**
- * Aceptar invitación
- * ⚠️ Se reescribe el documento con ID determinista
+ * Acepta una invitación familiar: crea documento con ID determinista
+ * y marca el antiguo como REMOVED.
  */
 export async function acceptFamilyInvite(
   oldFamilyLinkId: string,
@@ -91,9 +86,7 @@ export async function acceptFamilyInvite(
   await updateDoc(oldRef, { status: "REMOVED" });
 }
 
-/**
- * Rechazar invitación
- */
+/** Rechaza una invitación familiar */
 export async function rejectFamilyInvite(familyLinkId: string) {
   await updateDoc(doc(db, "familyLinks", familyLinkId), {
     status: "REJECTED",
@@ -102,9 +95,8 @@ export async function rejectFamilyInvite(familyLinkId: string) {
 }
 
 /**
- * Eliminar relación paciente–familiar
- * - Si pasas familyId + patientId: usa ID determinista
- * - Si pasas un único linkId: lo usa directamente
+ * Elimina una relación paciente–familiar.
+ * Acepta (familyId, patientId) o un linkId directo.
  */
 export async function removeFamilyLink(
   familyIdOrLinkId: string,
@@ -120,9 +112,7 @@ export async function removeFamilyLink(
   });
 }
 
-/**
- * Familiares activos de un paciente
- */
+/** Obtiene los familiares activos de un paciente con su perfil */
 export async function getActiveFamilyLinksForPatient(
   patientId: string
 ): Promise<{ linkId: string; family: UserProfile }[]> {
@@ -150,9 +140,7 @@ export async function getActiveFamilyLinksForPatient(
   }[];
 }
 
-/**
- * Pacientes activos de un familiar
- */
+/** Obtiene los pacientes asignados a un familiar */
 export async function getPatientsForFamily(
   familyId: string
 ): Promise<UserProfile[]> {
@@ -170,9 +158,7 @@ export async function getPatientsForFamily(
   return patients.filter(Boolean) as UserProfile[];
 }
 
-/**
- * IDs de familiares activos de un paciente
- */
+/** Devuelve los IDs de familiares activos de un paciente (para notificaciones) */
 export async function getActiveFamilies(patientId: string): Promise<string[]> {
   const q = query(
     collection(db, "familyLinks"),
