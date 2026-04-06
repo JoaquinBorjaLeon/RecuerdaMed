@@ -16,6 +16,7 @@ type CreateMedicationInput = {
   imageUrl?: string;
 };
 
+/** Crea una medicación asociada al paciente indicado */
 export async function createMedication(
   patientId: string,
   data: CreateMedicationInput
@@ -37,6 +38,7 @@ export async function createMedication(
   });
 }
 
+/** Elimina una medicación por su ID */
 export async function deleteMedication(medId: string) {
   await deleteDoc(doc(db, "medications", medId));
 }
@@ -45,6 +47,7 @@ type UpdateMedicationInput = {
   imageUrl?: string;
 };
 
+/** Actualiza campos de una medicación (actualmente solo imageUrl) */
 export async function updateMedication(
   medId: string,
   data: UpdateMedicationInput

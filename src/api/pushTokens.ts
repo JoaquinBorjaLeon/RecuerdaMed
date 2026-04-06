@@ -1,8 +1,8 @@
-// src/api/pushTokens.ts
 import { collection, addDoc, query, where, getDocs, serverTimestamp } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Platform } from "react-native";
 
+/** Guarda un push token del usuario (evita duplicados) */
 export async function savePushToken(patientId: string, token: string) {
   const q = query(
     collection(db, "push_tokens"),
@@ -11,11 +11,7 @@ export async function savePushToken(patientId: string, token: string) {
   );
 
   const snap = await getDocs(q);
-
-  // Evita duplicados
-  if (!snap.empty) {
-    return;
-  }
+  if (!snap.empty) return;
 
   await addDoc(collection(db, "push_tokens"), {
     patientId,
@@ -26,10 +22,10 @@ export async function savePushToken(patientId: string, token: string) {
   });
 }
 
+/** Obtiene todos los push tokens de una lista de usuarios (chunked por límite Firestore de 10) */
 export async function getPushTokensByUserIds(userIds: string[]) {
   if (!userIds.length) return [];
 
-  // Firestore "in" permite máx 10 elementos
   const chunks: string[][] = [];
   for (let i = 0; i < userIds.length; i += 10) {
     chunks.push(userIds.slice(i, i + 10));

@@ -21,6 +21,7 @@ import { Card } from "../src/components/card";
 import { PrimaryButton } from "../src/components/primaryButton";
 import { Colors } from "../src/theme/colors";
 
+/** Extrae las iniciales del nombre (máximo 2 letras) */
 function getInitials(name?: string | null) {
   if (!name) return "?";
   const parts = name.trim().split(/\s+/);
@@ -28,6 +29,7 @@ function getInitials(name?: string | null) {
   return initials || "?";
 }
 
+/** Pantalla de edición de perfil (nombre y foto) */
 export default function ProfileScreen() {
   const router = useRouter();
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -54,6 +56,7 @@ export default function ProfileScreen() {
     return unsub;
   }, [router]);
 
+  // URI efectiva del avatar: prioriza archivo local > URL manual > perfil guardado
   const avatarUri = useMemo(() => {
     if (localUri) return localUri;
     if (photoURL.trim()) return photoURL.trim();
@@ -86,6 +89,7 @@ export default function ProfileScreen() {
     setPhotoURL("");
   }
 
+  /** Valida que la URL tiene formato http(s) */
   function isValidURL(url: string): boolean {
     if (!url) return true;
     if (!/^https?:\/\/.+\..+/.test(url)) return false;
@@ -97,10 +101,10 @@ export default function ProfileScreen() {
     }
   }
 
+  /** Comprueba si la URL apunta a una imagen real (content-type o extensión) */
   async function validateImageURL(url: string): Promise<boolean> {
     if (!url) return true;
     try {
-      // Try HEAD first, fall back to GET if blocked
       let res: Response;
       try {
         res = await fetch(url, { method: "HEAD" });
@@ -109,7 +113,6 @@ export default function ProfileScreen() {
       }
       const ct = res.headers.get("content-type") ?? "";
       if (ct.startsWith("image/")) return true;
-      // Some CDNs don't return content-type on HEAD — check extension
       const path = new URL(url).pathname.toLowerCase();
       return /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?.*)?$/.test(path);
     } catch {

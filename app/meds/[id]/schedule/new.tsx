@@ -14,10 +14,11 @@ import { auth } from "../../../../src/lib/firebase";
 import { createSchedule } from "../../../../src/api/schedules";
 import type { SchedulePattern } from "../../../../src/types";
 
+/** Formulario para crear una nueva planificación de medicación */
 export default function NewSchedule() {
   const { id, patientId } = useLocalSearchParams<{
-    id: string;          // medId
-    patientId?: string; // 👈 viene SOLO si es cuidador
+    id: string;
+    patientId?: string;
   }>();
 
   const router = useRouter();
@@ -26,7 +27,6 @@ export default function NewSchedule() {
 
   const [uid, setUid] = useState<string | null>(null);
 
-  // form state
   const [pattern, setPattern] = useState<SchedulePattern>("DAILY");
   const [times, setTimes] = useState<string>("08:00,20:00");
   const [dow, setDow] = useState<string>("1,2,3,4,5");
@@ -107,7 +107,6 @@ export default function NewSchedule() {
 
     const toleranceMinutes = parseInt(tol) || 30;
 
-    // ✅ CLAVE: paciente real
     const realPatientId = patientId ?? uid;
 
     const base: any = {
@@ -157,7 +156,6 @@ export default function NewSchedule() {
     try {
       await createSchedule(base);
 
-      // Volver a la medicación para ver planificaciones
       router.replace({
         pathname: "/meds/[id]",
         params: {

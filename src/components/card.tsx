@@ -6,6 +6,7 @@ type Props = {
   onPress?: () => void;
 };
 
+/** Tarjeta reutilizable. Si recibe onPress se comporta como botón. */
 export function Card({ children, onPress }: Props) {
   const Wrapper = onPress ? TouchableOpacity : View;
 

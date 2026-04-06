@@ -1,4 +1,3 @@
-// app/index.tsx
 import { useEffect, useState } from "react";
 import {
   View,
@@ -23,13 +22,14 @@ import { Card } from "../src/components/card";
 import { PrimaryButton } from "../src/components/primaryButton";
 import { Colors } from "../src/theme/colors";
 
+/** Pantalla de login. Redirige automáticamente si ya hay sesión activa. */
 export default function Login() {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Si hay sesión, comprobar si tiene perfil
+  // Si hay sesión activa, redirigir según tenga o no perfil
   useEffect(() => {
     setEmail("");
     setPass("");
@@ -41,7 +41,6 @@ export default function Login() {
         const profile = await getUserById(u.uid);
 
         if (!profile) {
-          // Usuario sin perfil → completar registro
           router.replace("/register");
         } else {
           router.replace("/home");
@@ -54,6 +53,7 @@ export default function Login() {
     return unsub;
   }, [router]);
 
+  /** Valida email y contraseña antes de enviar */
   function validate() {
     if (!email.trim() || !pass) {
       Alert.alert("Faltan datos", "Introduce email y contraseña.");

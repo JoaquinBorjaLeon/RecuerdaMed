@@ -8,6 +8,7 @@ type Props = {
   disabled?: boolean;
 };
 
+/** Botón principal con variante "primary" (azul) o "danger" (rojo) */
 export function PrimaryButton({ title, onPress, variant = "primary", disabled = false }: Props) {
   return (
     <TouchableOpacity
