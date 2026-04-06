@@ -15,6 +15,15 @@ import { Card } from "../src/components/card";
 import { PrimaryButton } from "../src/components/primaryButton";
 import { Colors } from "../src/theme/colors";
 
+/** Mapeo de estados internos a etiquetas en español */
+const STATUS_LABELS: Record<string, string> = {
+  PLANNED: "Programada",
+  DUE: "Pendiente",
+  CONFIRMED: "Confirmada",
+  EXPIRED: "Caducada",
+  SKIPPED: "Omitida",
+};
+
 /** Formatea una fecha ISO a dd/mm HH:mm */
 function fmt(iso: string) {
   const d = new Date(iso);
@@ -177,7 +186,7 @@ export default function TomasScreen() {
           return (
             <Card>
               <Text style={styles.cardTitle}>
-                {item.status} · {fmt(item.plannedAt)}
+                {STATUS_LABELS[item.status] ?? item.status} · {fmt(item.plannedAt)}
               </Text>
 
               <Text style={styles.cardText}>
