@@ -29,6 +29,7 @@ import { deleteScheduleAndTomas } from "../../../../src/api/schedules";
 import { Colors } from "../../../../src/theme/colors";
 import { Card } from "../../../../src/components/card";
 import { PrimaryButton } from "../../../../src/components/primaryButton";
+import { DatePickerField } from "../../../../src/components/datePickerField";
 
 /** Etiquetas en español para los patrones de planificación */
 const PATTERN_OPTIONS: { value: SchedulePattern; label: string; desc: string }[] = [
@@ -166,11 +167,11 @@ export default function EditSchedule() {
     const end = endDate.trim() ? parseDate(endDate) : null;
 
     if (!start) {
-      Alert.alert("Fecha inicio inválida", "Usa YYYY-MM-DD o DD/MM/YYYY");
+      Alert.alert("Fecha inicio inválida", "Selecciona una fecha de inicio");
       return;
     }
     if (endDate.trim() && !end) {
-      Alert.alert("Fecha fin inválida", "Usa YYYY-MM-DD o DD/MM/YYYY");
+      Alert.alert("Fecha fin inválida", "Selecciona una fecha de fin válida");
       return;
     }
 
@@ -379,28 +380,23 @@ export default function EditSchedule() {
           </Card>
         )}
 
-        {/* Fechas */}
         <Card>
           <Text style={styles.label}>Fecha de inicio</Text>
-          <TextInput
+          <DatePickerField
             value={startDate}
-            onChangeText={setStartDate}
-            placeholder="DD/MM/YYYY o YYYY-MM-DD"
-            placeholderTextColor={Colors.muted}
-            style={styles.input}
-            editable={!disabled}
+            onChange={setStartDate}
+            placeholder="Seleccionar fecha de inicio"
+            disabled={disabled}
           />
 
           <Text style={[styles.label, { marginTop: 12 }]}>
             Fecha de fin (opcional)
           </Text>
-          <TextInput
+          <DatePickerField
             value={endDate}
-            onChangeText={setEndDate}
-            placeholder="DD/MM/YYYY o YYYY-MM-DD"
-            placeholderTextColor={Colors.muted}
-            style={styles.input}
-            editable={!disabled}
+            onChange={setEndDate}
+            placeholder="Sin fecha de fin"
+            disabled={disabled}
           />
 
           <Text style={[styles.label, { marginTop: 12 }]}>
