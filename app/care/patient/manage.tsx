@@ -37,7 +37,7 @@ export default function ManageCareRelations() {
         setCaregivers(caregiverItems);
         setFamilies(familyItems);
       } catch (e) {
-        console.warn(e);
+        console.warn("Error cargando relaciones:", e);
       } finally {
         setLoading(false);
       }

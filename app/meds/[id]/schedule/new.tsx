@@ -92,7 +92,7 @@ export default function NewSchedule() {
   /** Alterna un día en la selección de DOW */
   function toggleDow(day: number) {
     setSelectedDow((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort((a, b) => a - b)
     );
   }
 
@@ -121,7 +121,7 @@ export default function NewSchedule() {
       return;
     }
 
-    const toleranceMinutes = parseInt(tol) || 30;
+    const toleranceMinutes = Number.parseInt(tol) || 30;
 
     const realPatientId = patientId ?? uid;
 
@@ -157,7 +157,7 @@ export default function NewSchedule() {
     }
 
     if (pattern === "EVERY_X_HOURS") {
-      const n = parseInt(every);
+      const n = Number.parseInt(every);
       if (!n || n < 1) {
         Alert.alert("Intervalo inválido", "Indica un número ≥ 1");
         return;
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   },
   patternCardSelected: {
     borderColor: Colors.primary,
-    backgroundColor: "#DBEAFE",
+    backgroundColor: Colors.selectedBg,
   },
   patternTitle: {
     fontSize: 15,
@@ -427,6 +427,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   dowBtnTextActive: {
-    color: "#FFFFFF",
+    color: Colors.white,
   },
 });

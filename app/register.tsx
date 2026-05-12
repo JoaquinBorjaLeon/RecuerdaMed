@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   },
   roleCardSelected: {
     borderColor: Colors.primary,
-    backgroundColor: "#DBEAFE",
+    backgroundColor: Colors.selectedBg,
   },
   roleTitle: {
     fontSize: 16,

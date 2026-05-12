@@ -36,7 +36,7 @@ export default function ManageCaregivers() {
         const data = await getActiveCareLinksForPatient(u.uid);
         setItems(data);
       } catch (e) {
-        console.warn(e);
+        console.warn("Error cargando cuidadores:", e);
       } finally {
         setLoading(false);
       }

@@ -93,6 +93,14 @@ service cloud.firestore {
         isOwner(medOwnerById(resource.data.medId));
     }
 
+    match /push_tokens/{tokenId} {
+      allow read: if signedIn();
+      allow create: if signedIn() &&
+        request.resource.data.patientId == request.auth.uid;
+      allow delete: if signedIn() &&
+        resource.data.patientId == request.auth.uid;
+    }
+
     match /tomas/{tomaId} {
       allow read: if
         isOwner(resource.data.patientId) ||

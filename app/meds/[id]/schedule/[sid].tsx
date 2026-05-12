@@ -154,7 +154,7 @@ export default function EditSchedule() {
   function toggleDow(day: number) {
     if (disabled) return;
     setSelectedDow((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort()
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day].sort((a, b) => a - b)
     );
   }
 
@@ -178,7 +178,7 @@ export default function EditSchedule() {
     const patch: any = {
       startDate: start,
       endDate: end,
-      toleranceMinutes: parseInt(tol) || 30,
+      toleranceMinutes: Number.parseInt(tol) || 30,
       pattern,
       times: null,
       dow: null,
@@ -208,7 +208,7 @@ export default function EditSchedule() {
     }
 
     if (pattern === "EVERY_X_HOURS") {
-      const n = parseInt(every);
+      const n = Number.parseInt(every);
       if (!n || n < 1) {
         Alert.alert("Intervalo inválido", "Indica un número ≥ 1");
         return;
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
   },
   patternCardSelected: {
     borderColor: Colors.primary,
-    backgroundColor: "#DBEAFE",
+    backgroundColor: Colors.selectedBg,
   },
   patternTitle: {
     fontSize: 15,
@@ -528,6 +528,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   dowBtnTextActive: {
-    color: "#FFFFFF",
+    color: Colors.white,
   },
 });

@@ -1,11 +1,3 @@
-export type Patient = {
-  id: string;
-  fullName?: string | null;
-  timezone: string;
-  locale: string;
-  createdAt: any;
-};
-
 export type Medication = {
   id: string;
   patientId: string;
@@ -34,7 +26,7 @@ export type Schedule = {
   createdAt: any;
 };
 
-export type TomaStatus = "PLANNED" | "DUE" | "CONFIRMED" | "SKIPPED" | "EXPIRED";
+export type TomaStatus = "PLANNED" | "DUE" | "CONFIRMED" | "EXPIRED";
 
 export type Toma = {
   id: string;

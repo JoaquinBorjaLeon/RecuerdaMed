@@ -11,4 +11,8 @@ export const Colors = {
   border: scheme === "dark" ? "#374151" : "#D1D5DB",
   primary: "#2563EB",
   danger: "#DC2626",
+  placeholder: "#E5E7EB",
+  selectedBg: "#DBEAFE",
+  dangerBg: "#FEE2E2",
+  white: "#FFFFFF",
 };

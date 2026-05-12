@@ -21,7 +21,6 @@ const STATUS_LABELS: Record<string, string> = {
   DUE: "Pendiente",
   CONFIRMED: "Confirmada",
   EXPIRED: "Caducada",
-  SKIPPED: "Omitida",
 };
 
 /** Formatea una fecha ISO a dd/mm HH:mm */
