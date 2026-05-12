@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 10,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: Colors.placeholder,
   },
   cardText: {
     color: Colors.muted,

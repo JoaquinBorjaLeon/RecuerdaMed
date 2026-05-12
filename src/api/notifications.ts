@@ -28,27 +28,6 @@ export async function registerForPushNotifications() {
   return tokenData.data;
 }
 
-/** Envía una notificación local de prueba (aparece en 3 segundos) */
-export async function sendTestLocalNotification() {
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title: "💊 RecuerdaMed",
-      body: "Esto es una notificación de prueba",
-      sound: true,
-    },
-    trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-      seconds: 3,
-    },
-  });
-}
-
-/** Cancela una notificación local programada */
-export async function cancelTomaNotification(notificationId: string) {
-  if (!notificationId) return;
-  await Notifications.cancelScheduledNotificationAsync(notificationId);
-}
-
 /** Envía notificaciones push a múltiples usuarios vía Expo Push API */
 export async function sendPushToUsers(
   tokens: string[],
@@ -74,11 +53,3 @@ export async function sendPushToUsers(
   });
 }
 
-/** @deprecated Usa sendPushToUsers directamente */
-export async function sendPushToCaregivers(
-  tokens: string[],
-  title: string,
-  body: string
-) {
-  return sendPushToUsers(tokens, title, body);
-}
