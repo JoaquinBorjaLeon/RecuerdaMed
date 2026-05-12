@@ -37,7 +37,7 @@ export default function ManageFamilies() {
         const onlyFamily = data.filter((i) => i.caregiver.role === "FAMILY");
         setItems(onlyFamily as FamilyItem[]);
       } catch (e) {
-        console.warn(e);
+        console.warn("Error cargando familiares:", e);
       } finally {
         setLoading(false);
       }

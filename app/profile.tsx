@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
   },
   avatarActionDanger: {
-    backgroundColor: "#FEE2E2",
+    backgroundColor: Colors.dangerBg,
   },
   avatarActionText: {
     color: Colors.text,

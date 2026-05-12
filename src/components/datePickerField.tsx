@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   clearButtonText: {
-    color: "#FFFFFF",
+    color: Colors.white,
     fontWeight: "700",
     fontSize: 14,
   },
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 10,
-    backgroundColor: "#FEE2E2",
+    backgroundColor: Colors.dangerBg,
   },
   webClearText: {
     color: Colors.danger,
