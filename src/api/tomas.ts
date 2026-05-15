@@ -17,7 +17,6 @@ import type { Toma, Schedule } from "../types";
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { getActiveCaregivers } from "./careLinks";
-import { getActiveFamilies } from "./familyLinks";
 import { getPushTokensByUserIds } from "./pushTokens";
 import { sendPushToUsers } from "./notifications";
 import { getUserById } from "./users";
@@ -54,24 +53,17 @@ function jsDayToISOdow(jsDay: number) {
 /** Minutos antes de la expiración para enviar aviso */
 const EXPIRY_WARNING_MINUTES = 5;
 
-/** Obtiene los push tokens del paciente + sus cuidadores + sus familiares */
+/** Obtiene los push tokens del paciente + todos sus vinculados (cuidadores y familiares) */
 async function getAllLinkedTokens(patientId: string) {
-  const [caregiverIds, familyIds] = await Promise.all([
-    getActiveCaregivers(patientId),
-    getActiveFamilies(patientId),
-  ]);
-  const allIds = Array.from(new Set([patientId, ...caregiverIds, ...familyIds]));
+  const linkedIds = await getActiveCaregivers(patientId);
+  const allIds = Array.from(new Set([patientId, ...linkedIds]));
   return getPushTokensByUserIds(allIds);
 }
 
-/** Obtiene los push tokens de cuidadores + familiares (sin el paciente) */
+/** Obtiene los push tokens de vinculados (cuidadores y familiares, sin el paciente) */
 async function getLinkedCaregiverAndFamilyTokens(patientId: string) {
-  const [caregiverIds, familyIds] = await Promise.all([
-    getActiveCaregivers(patientId),
-    getActiveFamilies(patientId),
-  ]);
-  const allIds = Array.from(new Set([...caregiverIds, ...familyIds]));
-  return getPushTokensByUserIds(allIds);
+  const linkedIds = await getActiveCaregivers(patientId);
+  return getPushTokensByUserIds(linkedIds);
 }
 
 /** Construye nombre del medicamento y paciente para los mensajes push */

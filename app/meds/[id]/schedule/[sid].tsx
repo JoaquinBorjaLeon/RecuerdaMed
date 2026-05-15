@@ -16,6 +16,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  deleteField,
   collection,
   query,
   where,
@@ -180,9 +181,9 @@ export default function EditSchedule() {
       endDate: end,
       toleranceMinutes: Number.parseInt(tol) || 30,
       pattern,
-      times: null,
-      dow: null,
-      everyXHours: null,
+      times: deleteField(),
+      dow: deleteField(),
+      everyXHours: deleteField(),
     };
 
     if (pattern === "DAILY" || pattern === "DOW") {
@@ -217,9 +218,6 @@ export default function EditSchedule() {
     }
 
     try {
-      // Eliminar campos null para no sobrescribir datos existentes
-      Object.keys(patch).forEach((k) => patch[k] === null && delete patch[k]);
-
       await updateDoc(doc(db, "schedules", String(sid)), patch);
       Alert.alert("Listo", "Planificación actualizada");
       goToMed();
