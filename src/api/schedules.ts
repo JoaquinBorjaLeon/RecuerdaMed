@@ -33,25 +33,6 @@ export async function createSchedule(
   return ref.id;
 }
 
-/** Obtiene las planificaciones de una medicación (one-shot) */
-export async function listSchedulesByMed(
-  medId: string,
-  patientId?: string
-) {
-  const filters = [where("medId", "==", medId)];
-  if (patientId) filters.push(where("patientId", "==", patientId));
-
-  const q = query(
-    collection(db, "schedules"),
-    ...filters,
-    orderBy("createdAt", "desc")
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map(
-    (d) => ({ id: d.id, ...(d.data() as any) }) as Schedule
-  );
-}
-
 /** Listener en tiempo real de las planificaciones de una medicación */
 export function listenSchedulesByMed(
   medId: string,
