@@ -85,7 +85,7 @@ export default function RegisterScreen() {
 
       const cred = await createUserWithEmailAndPassword(
         auth,
-        email.trim(),
+        email.trim().toLowerCase(),
         pass
       );
 
@@ -276,17 +276,18 @@ export default function RegisterScreen() {
         {loading ? (
           <ActivityIndicator style={{ marginTop: 12 }} />
         ) : (
-          <PrimaryButton
-            title="Crear cuenta"
-            onPress={handleRegister}
-          />
+          <>
+            <PrimaryButton
+              title="Crear cuenta"
+              onPress={handleRegister}
+            />
+            <PrimaryButton
+              title="Volver"
+              variant="danger"
+              onPress={() => router.replace("/")}
+            />
+          </>
         )}
-
-          <PrimaryButton
-            title="Volver"
-            variant="danger"
-            onPress={() => router.replace("/")}
-          />
         </Card>
       </ScrollView>
     </SafeAreaView>

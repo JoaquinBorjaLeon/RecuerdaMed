@@ -122,6 +122,10 @@ export default function NewSchedule() {
     }
 
     const toleranceMinutes = Number.parseInt(tol) || 30;
+    if (toleranceMinutes < 1 || toleranceMinutes > 240) {
+      Alert.alert("Tolerancia inválida", "Debe estar entre 1 y 240 minutos");
+      return;
+    }
 
     const realPatientId = patientId ?? uid;
 

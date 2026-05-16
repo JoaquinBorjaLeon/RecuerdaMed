@@ -99,6 +99,7 @@ export function DatePickerField({
   }
 
   // En nativo: botón + DateTimePicker
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const DateTimePicker = require("@react-native-community/datetimepicker").default;
 
   return (

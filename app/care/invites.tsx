@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import { View, Text, FlatList, Alert, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { onAuthStateChanged } from "firebase/auth";
@@ -46,14 +46,26 @@ export default function InvitesScreen() {
   }, [router]);
 
   async function handleAccept(id: string) {
-    if (!auth.currentUser) return;
-    await acceptInvite(id, auth.currentUser.uid);
-    setInvites((prev) => prev.filter((i) => i.id !== id));
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      await acceptInvite(id, user.uid);
+      Alert.alert("OK", "Invitación aceptada");
+      setInvites((prev) => prev.filter((i) => i.id !== id));
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo aceptar");
+    }
   }
 
   async function handleReject(id: string) {
-    await rejectInvite(id);
-    setInvites((prev) => prev.filter((i) => i.id !== id));
+    try {
+      await rejectInvite(id);
+      Alert.alert("OK", "Invitación rechazada");
+      setInvites((prev) => prev.filter((i) => i.id !== id));
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo rechazar");
+    }
   }
 
   return (

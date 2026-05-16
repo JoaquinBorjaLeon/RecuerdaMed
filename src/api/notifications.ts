@@ -36,20 +36,23 @@ export async function sendPushToUsers(
 ) {
   if (!tokens.length) return;
 
-  await fetch("https://exp.host/--/api/v2/push/send", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(
-      tokens.map((token) => ({
-        to: token,
-        sound: "default",
-        title,
-        body,
-      }))
-    ),
-  });
+  try {
+    const res = await fetch("https://exp.host/--/api/v2/push/send", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(
+        tokens.map((token) => ({
+          to: token,
+          sound: "default",
+          title,
+          body,
+        }))
+      ),
+    });
+    if (!res.ok) console.warn("Push send failed:", res.status);
+  } catch {}
 }
 

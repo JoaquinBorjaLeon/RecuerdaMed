@@ -57,6 +57,29 @@ export function listenSchedulesByMed(
   });
 }
 
+/** Borra tomas futuras no confirmadas de un schedule y regenera con los nuevos parámetros */
+export async function regenerateScheduleTomas(scheduleId: string) {
+  const q = query(
+    collection(db, "tomas"),
+    where("scheduleId", "==", scheduleId)
+  );
+  const snap = await getDocs(q);
+  const now = new Date().toISOString();
+
+  for (const d of snap.docs) {
+    const toma = d.data();
+    if (toma.status !== "CONFIRMED" && toma.plannedAt > now) {
+      await deleteDoc(doc(db, "tomas", d.id));
+    }
+  }
+
+  const schedSnap = await getDoc(doc(db, "schedules", scheduleId));
+  if (schedSnap.exists()) {
+    const schedule = { id: schedSnap.id, ...schedSnap.data() } as Schedule;
+    await generateTomasFromSchedule(schedule, 7);
+  }
+}
+
 /** Elimina una planificación y todas sus tomas asociadas */
 export async function deleteScheduleAndTomas(
   scheduleId: string,
@@ -81,7 +104,9 @@ export async function deleteScheduleAndTomas(
   const q = query(collection(db, "tomas"), ...filters);
   const snap = await getDocs(q);
   for (const d of snap.docs) {
-    await deleteDoc(doc(db, "tomas", d.id));
+    if (d.data().status !== "CONFIRMED") {
+      await deleteDoc(doc(db, "tomas", d.id));
+    }
   }
 
   // Borrar la planificación

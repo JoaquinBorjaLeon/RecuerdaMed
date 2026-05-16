@@ -35,7 +35,9 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if signedIn();
-      allow write: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() && request.auth.uid == userId;
+      allow update: if signedIn() && request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'email', 'createdAt']);
     }
 
     match /careLinks/{careLinkId} {
@@ -48,8 +50,18 @@ service cloud.firestore {
 
       allow create: if signedIn() &&
         (
-          request.resource.data.patientId == request.auth.uid ||
-          request.resource.data.caregiverId == request.auth.uid
+          // Paciente crea invitación pendiente (sin caregiverId, ID determinista)
+          (request.resource.data.patientId == request.auth.uid &&
+           request.resource.data.status == "PENDING" &&
+           !('caregiverId' in request.resource.data) &&
+           careLinkId == (request.resource.data.caregiverEmail + "_" + request.resource.data.patientId)) ||
+          // Cuidador/familiar acepta invitación: debe existir una PENDING previa coherente
+          (request.resource.data.caregiverId == request.auth.uid &&
+           request.resource.data.caregiverEmail == request.auth.token.email &&
+           request.resource.data.status == "ACTIVE" &&
+           careLinkId == (request.auth.uid + "_" + request.resource.data.patientId) &&
+           get(/databases/$(database)/documents/careLinks/$(request.auth.token.email + "_" + request.resource.data.patientId)).data.status == "PENDING" &&
+           get(/databases/$(database)/documents/careLinks/$(request.auth.token.email + "_" + request.resource.data.patientId)).data.patientId == request.resource.data.patientId)
         );
 
       allow update: if signedIn() &&
@@ -57,7 +69,9 @@ service cloud.firestore {
           resource.data.patientId == request.auth.uid ||
           resource.data.caregiverId == request.auth.uid ||
           resource.data.caregiverEmail == request.auth.token.email
-        );
+        ) &&
+        request.resource.data.status in ["REJECTED", "REMOVED"] &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['patientId', 'caregiverId', 'caregiverEmail']);
     }
 
     match /medications/{medId} {
