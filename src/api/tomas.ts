@@ -396,6 +396,7 @@ export async function canDeleteMedication(
 
     for (const d of schedSnap.docs) {
       const sched = d.data();
+      if (sched.status === "DELETED") continue;
       if (!sched.endDate || sched.endDate >= todayYMD) return false;
     }
 
