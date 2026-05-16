@@ -75,7 +75,7 @@ export default function Login() {
 
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, email.trim(), pass);
+      await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), pass);
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "No se pudo iniciar sesión");
     } finally {
