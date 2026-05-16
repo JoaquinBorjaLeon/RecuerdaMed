@@ -9,6 +9,7 @@ import {
   serverTimestamp,
   where,
   deleteDoc,
+  updateDoc,
   doc,
 } from "firebase/firestore";
 
@@ -50,9 +51,9 @@ export function listenSchedulesByMed(
 
   return onSnapshot(q, (snap) => {
     cb(
-      snap.docs.map(
-        (d) => ({ id: d.id, ...(d.data() as any) }) as Schedule
-      )
+      snap.docs
+        .map((d) => ({ id: d.id, ...(d.data() as any) }) as Schedule & { status?: string })
+        .filter((s) => s.status !== "DELETED")
     );
   });
 }
@@ -109,6 +110,9 @@ export async function deleteScheduleAndTomas(
     }
   }
 
-  // Borrar la planificación
-  await deleteDoc(doc(db, "schedules", scheduleId));
+  // Archivar la planificación (preserva contexto histórico)
+  await updateDoc(doc(db, "schedules", scheduleId), {
+    status: "DELETED",
+    deletedAt: serverTimestamp(),
+  });
 }
