@@ -230,6 +230,9 @@ export async function generateTomasFromSchedule(
   const createOneToma = async (plannedAt: Date) => {
     if (plannedAt < rangeStart || plannedAt > rangeEnd) return;
 
+    const windowEnd = new Date(plannedAt.getTime() + tolerance * 60000);
+    if (windowEnd <= new Date()) return;
+
     const plannedISO = iso(plannedAt);
     const dedupeKey = `${schedule.id}__${plannedISO}`;
 
@@ -246,6 +249,7 @@ export async function generateTomasFromSchedule(
             body: "Es hora de tomar tu medicación",
             data: {
               route: "/tomas",
+              tomaId: dedupeKey,
               tomaPlannedAt: plannedISO,
               scheduleId: schedule.id,
               medId: schedule.medId,
@@ -268,6 +272,7 @@ export async function generateTomasFromSchedule(
               body: `La toma va a caducar en ${EXPIRY_WARNING_MINUTES} minutos`,
               data: {
                 route: "/tomas",
+                tomaId: dedupeKey,
                 tomaPlannedAt: plannedISO,
                 scheduleId: schedule.id,
                 medId: schedule.medId,
@@ -289,6 +294,7 @@ export async function generateTomasFromSchedule(
               body: "No has confirmado la toma dentro del tiempo",
               data: {
                 route: "/tomas",
+                tomaId: dedupeKey,
                 tomaPlannedAt: plannedISO,
                 scheduleId: schedule.id,
                 medId: schedule.medId,
