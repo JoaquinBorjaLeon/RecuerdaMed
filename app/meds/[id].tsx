@@ -83,7 +83,7 @@ async function handleDelete() {
   try {
     const ok = await canDeleteMedication(med.id, med.patientId);
     if (!ok) {
-      const msg = "No puedes eliminar: hay tomas futuras.";
+      const msg = "No puedes eliminar: hay tomas futuras o planificaciones activas.";
       if (Platform.OS === "web") window.alert(msg);
       else Alert.alert("No permitido", msg);
       setDeleting(false);
