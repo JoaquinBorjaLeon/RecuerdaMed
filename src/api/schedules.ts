@@ -105,7 +105,8 @@ export async function deleteScheduleAndTomas(
   const q = query(collection(db, "tomas"), ...filters);
   const snap = await getDocs(q);
   for (const d of snap.docs) {
-    if (d.data().status !== "CONFIRMED") {
+    const status = d.data().status;
+    if (status !== "CONFIRMED" && status !== "EXPIRED") {
       await deleteDoc(doc(db, "tomas", d.id));
     }
   }

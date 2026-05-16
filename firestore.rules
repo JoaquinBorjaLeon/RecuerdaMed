@@ -84,8 +84,9 @@ service cloud.firestore {
         (isRole("CAREGIVER") && isLinkedTo(request.resource.data.patientId));
 
       allow update: if
-        isOwner(resource.data.patientId) ||
-        (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId));
+        (isOwner(resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId))) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['patientId', 'createdAt', 'createdBy']);
 
       allow delete: if
         isOwner(resource.data.patientId) ||
@@ -101,7 +102,13 @@ service cloud.firestore {
         isOwner(request.resource.data.patientId) ||
         (isRole("CAREGIVER") && isLinkedTo(request.resource.data.patientId));
 
-      allow update, delete: if
+      allow update: if
+        (isOwner(resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId)) ||
+        isOwner(medOwnerById(resource.data.medId))) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['medId', 'patientId', 'createdAt']);
+
+      allow delete: if
         isOwner(resource.data.patientId) ||
         (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId)) ||
         isOwner(medOwnerById(resource.data.medId));
@@ -124,7 +131,13 @@ service cloud.firestore {
         isOwner(request.resource.data.patientId) ||
         (isRole("CAREGIVER") && isLinkedTo(request.resource.data.patientId));
 
-      allow update, delete: if
+      allow update: if
+        (isOwner(resource.data.patientId) ||
+        (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId)) ||
+        isOwner(medOwnerById(resource.data.medId))) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['patientId', 'medId', 'scheduleId', 'plannedAt', 'windowStart', 'windowEnd', 'dedupeKey', 'createdAt']);
+
+      allow delete: if
         isOwner(resource.data.patientId) ||
         (isRole("CAREGIVER") && isLinkedTo(resource.data.patientId)) ||
         isOwner(medOwnerById(resource.data.medId));

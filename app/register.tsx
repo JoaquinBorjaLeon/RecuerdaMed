@@ -166,7 +166,6 @@ export default function RegisterScreen() {
         <TextInput
           value={email}
           onChangeText={setEmail}
-          onFocus={() => setEmail("")}
           autoCapitalize="none"
           keyboardType="email-address"
           placeholder="email@ejemplo.com"
@@ -182,7 +181,6 @@ export default function RegisterScreen() {
         <TextInput
           value={pass}
           onChangeText={setPass}
-          onFocus={() => setPass("")}
           secureTextEntry
           placeholder="Mínimo 6 caracteres"
           autoComplete="new-password"

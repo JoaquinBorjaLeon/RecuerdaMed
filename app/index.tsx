@@ -108,7 +108,6 @@ export default function Login() {
           spellCheck={false}
           value={email}
           onChangeText={setEmail}
-          onFocus={() => setEmail("")}
           style={styles.input}
           placeholderTextColor={Colors.muted}
         />
@@ -124,7 +123,6 @@ export default function Login() {
           spellCheck={false}
           value={pass}
           onChangeText={setPass}
-          onFocus={() => setPass("")}
           style={styles.input}
           placeholderTextColor={Colors.muted}
         />
