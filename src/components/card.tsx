@@ -8,17 +8,15 @@ type Props = {
 
 /** Tarjeta reutilizable. Si recibe onPress se comporta como botón. */
 export function Card({ children, onPress }: Props) {
-  const Wrapper = onPress ? TouchableOpacity : View;
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.8}>
+        {children}
+      </TouchableOpacity>
+    );
+  }
 
-  return (
-    <Wrapper
-      onPress={onPress}
-      style={styles.card}
-      activeOpacity={0.8}
-    >
-      {children}
-    </Wrapper>
-  );
+  return <View style={styles.card}>{children}</View>;
 }
 
 const styles = StyleSheet.create({

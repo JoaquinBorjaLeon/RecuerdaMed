@@ -26,7 +26,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../../src/lib/firebase";
 import type { Schedule, SchedulePattern } from "../../../../src/types";
-import { deleteScheduleAndTomas } from "../../../../src/api/schedules";
+import { deleteScheduleAndTomas, regenerateScheduleTomas } from "../../../../src/api/schedules";
 import { Colors } from "../../../../src/theme/colors";
 import { Card } from "../../../../src/components/card";
 import { PrimaryButton } from "../../../../src/components/primaryButton";
@@ -176,10 +176,16 @@ export default function EditSchedule() {
       return;
     }
 
+    const toleranceMinutes = Number.parseInt(tol) || 30;
+    if (toleranceMinutes < 1 || toleranceMinutes > 240) {
+      Alert.alert("Tolerancia inválida", "Debe estar entre 1 y 240 minutos");
+      return;
+    }
+
     const patch: any = {
       startDate: start,
       endDate: end,
-      toleranceMinutes: Number.parseInt(tol) || 30,
+      toleranceMinutes,
       pattern,
       times: deleteField(),
       dow: deleteField(),
@@ -219,6 +225,7 @@ export default function EditSchedule() {
 
     try {
       await updateDoc(doc(db, "schedules", String(sid)), patch);
+      await regenerateScheduleTomas(String(sid));
       Alert.alert("Listo", "Planificación actualizada");
       goToMed();
     } catch (e: any) {

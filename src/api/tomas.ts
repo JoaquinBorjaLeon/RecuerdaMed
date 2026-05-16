@@ -20,35 +20,7 @@ import { getActiveCaregivers } from "./careLinks";
 import { getPushTokensByUserIds } from "./pushTokens";
 import { sendPushToUsers } from "./notifications";
 import { getUserById } from "./users";
-
-// ── Helpers de fecha ──
-
-function startOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
-
-function endOfDay(d: Date) {
-  const x = new Date(d);
-  x.setHours(23, 59, 59, 999);
-  return x;
-}
-
-/** Parsea "YYYY-MM-DD" a Date local */
-function parseYMD(ymd: string): Date {
-  const [y, m, d] = ymd.split("-").map(Number);
-  return new Date(y, m - 1, d, 0, 0, 0, 0);
-}
-
-function iso(d: Date) {
-  return d.toISOString();
-}
-
-/** Convierte el day de JS (0=Dom) al ISO 8601 (1=Lun, 7=Dom) */
-function jsDayToISOdow(jsDay: number) {
-  return ((jsDay + 6) % 7) + 1;
-}
+import { startOfDay, endOfDay, parseYMD, iso, jsDayToISOdow } from "../utils/tomaHelpers";
 
 /** Minutos antes de la expiración para enviar aviso */
 const EXPIRY_WARNING_MINUTES = 5;
@@ -243,7 +215,7 @@ export async function generateTomasFromSchedule(
     }
   } catch {}
 
-  const tolerance = schedule.toleranceMinutes ?? 30;
+  const tolerance = Math.max(schedule.toleranceMinutes ?? 30, 1);
 
   const today = startOfDay(new Date());
   const start = startOfDay(parseYMD(schedule.startDate));
@@ -390,10 +362,12 @@ export async function generateTomasFromSchedule(
   }
 
   if (schedule.pattern === "EVERY_X_HOURS") {
+    const hours = schedule.everyXHours ?? 1;
+    if (hours <= 0) return;
     let t = new Date(rangeStart);
     while (t <= rangeEnd) {
       await createOneToma(new Date(t));
-      t = new Date(t.getTime() + schedule.everyXHours! * 3600000);
+      t = new Date(t.getTime() + hours * 3600000);
     }
   }
 }

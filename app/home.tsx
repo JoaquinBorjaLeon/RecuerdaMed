@@ -35,7 +35,7 @@ export default function Home() {
 
   const [user, setUser] = useState<UserProfile | null>(null);
   const [meds, setMeds] = useState<Medication[]>([]);
-  const [notificationsReady, setNotificationsReady] = useState(false);
+  const notificationsReadyRef = useRef(false);
 
   const unsubMedsRef = useRef<null | (() => void)>(null);
   const unsubAuthRef = useRef<null | (() => void)>(null);
@@ -60,11 +60,11 @@ export default function Home() {
       setUser(profile);
 
       // Registrar push token en nativo
-      if (!notificationsReady && Platform.OS !== "web") {
+      if (!notificationsReadyRef.current && Platform.OS !== "web") {
         try {
           const token = await registerForPushNotifications();
           await savePushToken(u.uid, token);
-          setNotificationsReady(true);
+          notificationsReadyRef.current = true;
         } catch {
           console.warn("Notificaciones no habilitadas");
         }
@@ -92,7 +92,7 @@ export default function Home() {
       if (unsubMedsRef.current) unsubMedsRef.current();
       if (unsubAuthRef.current) unsubAuthRef.current();
     };
-  }, [router, notificationsReady]);
+  }, [router]);
 
   /** Cierra sesión desuscribiendo primero los listeners para evitar permission-denied */
   async function handleLogout() {

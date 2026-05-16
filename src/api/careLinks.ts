@@ -1,6 +1,7 @@
 import {
   setDoc,
   doc,
+  getDoc,
   query,
   where,
   getDocs,
@@ -8,7 +9,7 @@ import {
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db, auth } from "../lib/firebase";
 import { getUserById, UserProfile } from "./users";
 
 export type CareLinkStatus = "PENDING" | "ACTIVE" | "REJECTED" | "REMOVED";
@@ -66,13 +67,18 @@ export async function acceptInvite(
   caregiverId: string
 ) {
   const oldRef = doc(db, "careLinks", oldCareLinkId);
-  const snap = await getDocs(
-    query(collection(db, "careLinks"), where("__name__", "==", oldCareLinkId))
-  );
+  const snap = await getDoc(oldRef);
 
-  if (snap.empty) throw new Error("Invitación no encontrada");
+  if (!snap.exists()) throw new Error("Invitación no encontrada");
 
-  const data = snap.docs[0].data();
+  const data = snap.data();
+  if (data.status !== "PENDING") throw new Error("La invitación ya fue procesada");
+
+  const currentEmail = auth.currentUser?.email?.toLowerCase();
+  if (!currentEmail || data.caregiverEmail !== currentEmail) {
+    throw new Error("Esta invitación no está dirigida a tu cuenta");
+  }
+
   const patientId = data.patientId;
 
   const newId = `${caregiverId}_${patientId}`;
