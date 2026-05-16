@@ -23,7 +23,9 @@ export type Schedule = {
   startDate: string;         // "YYYY-MM-DD"
   endDate?: string | null;
   toleranceMinutes: number;
+  status?: "ACTIVE" | "DELETED";
   createdAt: any;
+  deletedAt?: any;
 };
 
 export type TomaStatus = "PLANNED" | "DUE" | "CONFIRMED" | "EXPIRED";

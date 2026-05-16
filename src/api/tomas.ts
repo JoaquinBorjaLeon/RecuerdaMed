@@ -1,6 +1,6 @@
 import {
   collection,
-  addDoc,
+  setDoc,
   serverTimestamp,
   query,
   where,
@@ -60,24 +60,16 @@ async function buildTomaMessage(toma: Toma) {
 
 // ── Operaciones Firestore ──
 
-/** Inserta una toma en Firestore */
+/** Inserta una toma en Firestore usando el dedupeKey como ID determinista (escritura atómica) */
 export async function createToma(data: Omit<Toma, "id" | "createdAt">) {
-  await addDoc(collection(db, "tomas"), {
+  const tomaRef = doc(db, "tomas", data.dedupeKey);
+  const existing = await getDoc(tomaRef);
+  if (existing.exists()) return;
+
+  await setDoc(tomaRef, {
     ...data,
     createdAt: serverTimestamp(),
   });
-}
-
-/** Comprueba si ya existe una toma con el mismo dedupeKey para evitar duplicados */
-async function tomaExistsByDedupeKey(patientId: string, dedupeKey: string) {
-  const q = query(
-    collection(db, "tomas"),
-    where("patientId", "==", patientId),
-    where("dedupeKey", "==", dedupeKey),
-    limit(1)
-  );
-  const snap = await getDocs(q);
-  return !snap.empty;
 }
 
 /** Listener en tiempo real de las tomas de un paciente. Actualiza estados automáticamente. */
@@ -241,7 +233,8 @@ export async function generateTomasFromSchedule(
     const plannedISO = iso(plannedAt);
     const dedupeKey = `${schedule.id}__${plannedISO}`;
 
-    if (await tomaExistsByDedupeKey(schedule.patientId, dedupeKey)) return;
+    const existing = await getDoc(doc(db, "tomas", dedupeKey));
+    if (existing.exists()) return;
 
     let notificationId: string | undefined;
     if (Platform.OS !== "web") {
@@ -374,27 +367,39 @@ export async function generateTomasFromSchedule(
 
 /**
  * Comprueba si se puede eliminar una medicación.
- * Devuelve false si existen tomas futuras (fail-safe).
+ * Devuelve false si existen tomas futuras o planificaciones activas (sin endDate o con endDate futura).
  */
 export async function canDeleteMedication(
   medicationId: string,
   patientId?: string
 ): Promise<boolean> {
   const nowIso = new Date().toISOString();
+  const todayYMD = nowIso.slice(0, 10);
 
   try {
-    const base = [
+    const tomaBase = [
       where("medId", "==", medicationId),
       where("plannedAt", ">", nowIso),
     ];
-    const q = query(
+    const tomaQ = query(
       collection(db, "tomas"),
-      ...(patientId ? [where("patientId", "==", patientId), ...base] : base),
+      ...(patientId ? [where("patientId", "==", patientId), ...tomaBase] : tomaBase),
       limit(1)
     );
+    const tomaSnap = await getDocs(tomaQ);
+    if (!tomaSnap.empty) return false;
 
-    const snap = await getDocs(q);
-    return snap.empty;
+    const schedFilters = [where("medId", "==", medicationId)];
+    if (patientId) schedFilters.push(where("patientId", "==", patientId));
+    const schedQ = query(collection(db, "schedules"), ...schedFilters);
+    const schedSnap = await getDocs(schedQ);
+
+    for (const d of schedSnap.docs) {
+      const sched = d.data();
+      if (!sched.endDate || sched.endDate >= todayYMD) return false;
+    }
+
+    return true;
   } catch (e: any) {
     console.warn("canDeleteMedication error:", e?.code, e?.message, e);
     return false;
