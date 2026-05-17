@@ -14,6 +14,7 @@ import { useRouter } from "expo-router";
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 
 import { auth } from "../src/lib/firebase";
@@ -68,6 +69,20 @@ export default function Login() {
       return false;
     }
     return true;
+  }
+
+  async function handleResetPassword() {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes("@")) {
+      Alert.alert("Email requerido", "Introduce tu email para recuperar la contraseña.");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, trimmed);
+      Alert.alert("Email enviado", "Revisa tu bandeja de entrada para restablecer la contraseña.");
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo enviar el email de recuperación");
+    }
   }
 
   async function handleLogin() {
@@ -142,14 +157,19 @@ export default function Login() {
       </Card>
 
       {!loading && (
-        <Pressable
-          onPress={() => router.push("/register")}
-          style={styles.linkWrap}
-        >
-          <Text style={styles.linkText}>
-            ¿No tienes cuenta? Crear cuenta
-          </Text>
-        </Pressable>
+        <>
+          <Pressable onPress={handleResetPassword} style={styles.linkWrap}>
+            <Text style={styles.linkText}>¿Has olvidado tu contraseña?</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/register")}
+            style={styles.linkWrap}
+          >
+            <Text style={styles.linkText}>
+              ¿No tienes cuenta? Crear cuenta
+            </Text>
+          </Pressable>
+        </>
       )}
     </SafeAreaView>
   );
