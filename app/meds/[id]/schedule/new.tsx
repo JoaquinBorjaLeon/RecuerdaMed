@@ -79,7 +79,13 @@ export default function NewSchedule() {
   }
 
   function isValidTime(value: string) {
-    return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+    return /^(\d{1,2}):[0-5]\d$/.test(value) &&
+      Number.parseInt(value.split(":")[0]) <= 23;
+  }
+
+  function normalizeTime(value: string) {
+    const [h, m] = value.split(":");
+    return `${h.padStart(2, "0")}:${m}`;
   }
 
   function todayYMD() {
@@ -149,7 +155,25 @@ export default function NewSchedule() {
         Alert.alert("Hora inválida", `Formato incorrecto: ${invalid}`);
         return;
       }
-      base.times = t;
+      const normalized = t.map(normalizeTime);
+
+      if (end && end <= today) {
+        const now = new Date();
+        const nowMinutes = now.getHours() * 60 + now.getMinutes();
+        const allPast = normalized.every((time) => {
+          const [hh, mm] = time.split(":").map(Number);
+          return hh * 60 + mm + toleranceMinutes <= nowMinutes;
+        });
+        if (allPast) {
+          Alert.alert(
+            "Planificación sin efecto",
+            "Todas las horas indicadas ya han pasado. Cambia la fecha de fin o las horas."
+          );
+          return;
+        }
+      }
+
+      base.times = normalized;
     }
 
     if (pattern === "DOW") {

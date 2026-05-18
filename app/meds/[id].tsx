@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Text, FlatList, Alert, Platform, StyleSheet, Image, View, TouchableOpacity } from "react-native";
+import { Text, Alert, Platform, StyleSheet, Image, View, TouchableOpacity, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import type { Href } from "expo-router";
@@ -31,6 +31,11 @@ export default function MedDetail() {
 
   const isReadOnly = readonly === "1" || readonly === "true";
   const effectivePatientId = patientId;
+
+  const todayYMD = new Date().toISOString().slice(0, 10);
+  const activeSchedules = schedules.filter(
+    (s) => !s.endDate || s.endDate >= todayYMD
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -187,7 +192,7 @@ async function handleDelete() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: Colors.background }]}>
       {med ? (
-        <>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
           <Card>
             <View style={styles.headerRow}>
               {!!med.imageUrl ? (
@@ -248,17 +253,12 @@ async function handleDelete() {
 
           <Text style={styles.sectionTitle}>Planificaciones</Text>
 
-          <FlatList
-            data={schedules}
-            style={styles.scheduleList}
-            contentContainerStyle={styles.scheduleListContent}
-            scrollEnabled={false}
-            keyExtractor={(i) => i.id}
-            ListEmptyComponent={
-              <Text style={styles.emptyText}>No hay planificaciones aún.</Text>
-            }
-            renderItem={({ item }) => (
+          {activeSchedules.length === 0 ? (
+            <Text style={styles.emptyText}>No hay planificaciones activas.</Text>
+          ) : (
+            activeSchedules.map((item) => (
               <Card
+                key={item.id}
                 {...(!isReadOnly
                   ? {
                       onPress: () =>
@@ -282,8 +282,8 @@ async function handleDelete() {
                   {item.endDate ? ` · Fin: ${item.endDate}` : ""}
                 </Text>
               </Card>
-            )}
-          />
+            ))
+          )}
 
           {!isReadOnly && (
             <PrimaryButton
@@ -326,7 +326,7 @@ async function handleDelete() {
               )
             }
           />
-        </>
+        </ScrollView>
       ) : (
         <Text style={styles.loading}>Cargando…</Text>
       )}
@@ -338,7 +338,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
+  },
+  scrollContent: {
     gap: 12,
+    paddingBottom: 24,
   },
   title: {
     fontSize: 22,
@@ -427,12 +430,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: Colors.text,
     marginTop: 4,
-  },
-  scheduleList: {
-    flexGrow: 0,
-  },
-  scheduleListContent: {
-    paddingBottom: 0,
   },
   emptyText: {
     color: Colors.muted,

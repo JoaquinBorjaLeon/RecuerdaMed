@@ -1,50 +1,77 @@
-# Welcome to your Expo app 👋
+# RecuerdaMed
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil multiplataforma para mejorar la adherencia terapéutica en personas mayores y polimedicadas, con notificación a cuidadores y familiares autorizados.
 
-## Get started
+Trabajo Fin de Grado — Grado en Ingeniería Informática (Ingeniería del Software), ETSII, Universidad de Sevilla.
 
-1. Install dependencies
+## Stack tecnológico
+
+- **Frontend**: React Native 0.81.5 + Expo ~54.0.33 + TypeScript ~5.9.2
+- **Backend**: Firebase 12.4.0 (Auth, Firestore, Storage)
+- **Notificaciones**: expo-notifications (locales) + Expo Push Service (remotas)
+- **Despliegue**: Expo Go (móvil) + Vercel (web)
+
+## Requisitos previos
+
+- Node.js 20+
+- npm
+- Expo Go (para pruebas en dispositivo móvil)
+
+## Instalación
+
+1. Clonar el repositorio e instalar dependencias:
 
    ```bash
+   git clone https://github.com/JoaquinBorjaLeon/app-RecuerdaMed.git
+   cd app-RecuerdaMed
    npm install
    ```
 
-2. Start the app
+2. Iniciar la aplicación:
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. Escanear el código QR con Expo Go (móvil) o pulsar `w` para abrir en navegador.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Scripts disponibles
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+| Comando | Descripción |
+|---------|-------------|
+| `npx expo start` | Inicia el servidor de desarrollo |
+| `npm run lint` | Ejecuta ESLint |
+| `npm run typecheck` | Verificación de tipos TypeScript |
+| `npm run test` | Ejecuta los 18 tests unitarios (Jest) |
 
-## Get a fresh project
+## Estructura del proyecto
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+├── app/                # Pantallas (Expo Router, enrutamiento por ficheros)
+│   ├── care/           # Flujos del cuidador
+│   ├── family/         # Flujos del familiar
+│   └── meds/           # CRUD medicaciones y planificaciones
+├── src/
+│   ├── api/            # Capa de negocio (un módulo por entidad)
+│   ├── components/     # Componentes reutilizables
+│   ├── lib/            # Configuración Firebase y utilidades
+│   ├── theme/          # Paleta de colores (light/dark)
+│   ├── types.ts        # Interfaces TypeScript compartidas
+│   └── utils/          # Funciones puras + tests unitarios
+├── firestore.rules     # Reglas de seguridad de Firestore
+├── storage.rules       # Reglas de seguridad de Storage
+└── firestore.indexes.json  # 11 índices compuestos
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Características principales
 
-## Learn more
+- **Tres roles diferenciados**: Paciente, Cuidador y Familiar con permisos específicos
+- **Planificación flexible**: patrones diario, días de la semana y cada X horas
+- **Ventanas de tolerancia**: confirmación dentro de un margen configurable
+- **Notificaciones automáticas**: locales (recordatorio, aviso, expiración) y push remotas a vinculados
+- **Vinculación con consentimiento**: invitaciones revocables entre paciente y cuidadores/familiares
+- **Historial de adherencia**: trazabilidad completa de tomas confirmadas y expiradas
 
-To learn more about developing your project with Expo, look at the following resources:
+## Autor
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Joaquín Borja León
