@@ -60,7 +60,13 @@ function parseDate(input: string): string | null {
 }
 
 function isValidTime(value: string) {
-  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+  return /^(\d{1,2}):[0-5]\d$/.test(value) &&
+    Number.parseInt(value.split(":")[0]) <= 23;
+}
+
+function normalizeTime(value: string) {
+  const [h, m] = value.split(":");
+  return `${h.padStart(2, "0")}:${m}`;
 }
 
 /** Pantalla de edición/visualización de una planificación existente */
@@ -121,18 +127,23 @@ export default function EditSchedule() {
         else setEvery("8");
 
         if (s.endDate) {
-          const lastTomaSnap = await getDocs(
-            query(
-              collection(db, "tomas"),
-              where("scheduleId", "==", String(sid)),
-              orderBy("windowEnd", "desc"),
-              limit(1)
-            )
-          );
+          let lastWindowEnd: Date | null = null;
+          try {
+            const lastTomaSnap = await getDocs(
+              query(
+                collection(db, "tomas"),
+                where("scheduleId", "==", String(sid)),
+                orderBy("windowEnd", "desc"),
+                limit(1)
+              )
+            );
+            if (!lastTomaSnap.empty) {
+              const last = lastTomaSnap.docs[0].data() as any;
+              lastWindowEnd = new Date(last.windowEnd);
+            }
+          } catch { /* fallback to endDate */ }
 
-          if (!lastTomaSnap.empty) {
-            const last = lastTomaSnap.docs[0].data() as any;
-            const lastWindowEnd = new Date(last.windowEnd);
+          if (lastWindowEnd) {
             setLocked(new Date() > lastWindowEnd);
           } else {
             const [y, m, d] = s.endDate.split("-").map(Number);
@@ -203,7 +214,7 @@ export default function EditSchedule() {
         Alert.alert("Hora inválida", `Formato incorrecto: ${invalid}`);
         return;
       }
-      patch.times = t;
+      patch.times = t.map(normalizeTime);
     }
 
     if (pattern === "DOW") {

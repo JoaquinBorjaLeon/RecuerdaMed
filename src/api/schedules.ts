@@ -60,9 +60,14 @@ export function listenSchedulesByMed(
 
 /** Borra tomas futuras no confirmadas de un schedule y regenera con los nuevos parámetros */
 export async function regenerateScheduleTomas(scheduleId: string) {
+  const schedSnap = await getDoc(doc(db, "schedules", scheduleId));
+  if (!schedSnap.exists()) return;
+  const schedule = { id: schedSnap.id, ...schedSnap.data() } as Schedule;
+
   const q = query(
     collection(db, "tomas"),
-    where("scheduleId", "==", scheduleId)
+    where("scheduleId", "==", scheduleId),
+    where("patientId", "==", schedule.patientId)
   );
   const snap = await getDocs(q);
   const now = new Date().toISOString();
@@ -74,11 +79,7 @@ export async function regenerateScheduleTomas(scheduleId: string) {
     }
   }
 
-  const schedSnap = await getDoc(doc(db, "schedules", scheduleId));
-  if (schedSnap.exists()) {
-    const schedule = { id: schedSnap.id, ...schedSnap.data() } as Schedule;
-    await generateTomasFromSchedule(schedule, 7);
-  }
+  await generateTomasFromSchedule(schedule, 7);
 }
 
 /** Elimina una planificación y todas sus tomas asociadas */
